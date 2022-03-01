@@ -1,6 +1,6 @@
 # Omni Pretest
 ## Setup Environment
-* Download docker and Install
+* Download docker and Installfffff
 
 * Clone **pretest** project 
     ```
