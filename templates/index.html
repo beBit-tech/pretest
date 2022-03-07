@@ -1,0 +1,13 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h1>Testing Home</h1>
+  <p>Welcome to Testing, a website developed by <em>Sean Chen for pretest</em>!</p>
+
+  <h2>Contents</h2>
+  <p>The store has the following record counts:</p>
+  <ul>
+    <li><strong>Total Orders:</strong> {{ num_order }}</li>
+    <li><strong>Total Products:</strong> {{ num_product }}</li>
+  </ul>
+{% endblock %}
