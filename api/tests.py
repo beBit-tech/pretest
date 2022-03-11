@@ -13,7 +13,7 @@ class OrderTestCase(APITestCase):
         "Detail": "logitech mouse * 2",
         "Order_number": "d9ebbb63-b171-4c70-9014-6e160eb0f9f4",
         "Total_price": 400,
-        "product": 3}
+        "product": "logitech bluetooth mouse"}
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data, data)
