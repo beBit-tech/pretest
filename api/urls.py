@@ -1,7 +1,9 @@
-from django.contrib import admin
 from django.urls import path
-from api.views import import_order
+from api.views import *
+from rest_framework import routers
+from django.urls import include
 
-urlpatterns = [
-    path('import-order/', import_order)
-]
+router = routers.SimpleRouter()
+router.register("product", ProductViewSet, basename="product")
+
+urlpatterns = [path("import-order/", import_order, name="import_order"), path("", include(router.urls))]

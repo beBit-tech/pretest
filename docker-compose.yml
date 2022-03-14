@@ -1,5 +1,5 @@
 version: "3.9"
-   
+
 services:
   db:
     image: postgres
@@ -27,5 +27,15 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_PORT=7432
     command: sh run_web.sh
+    depends_on:
+      - db
+
+  phppgadmin:
+    image: docker.io/bitnami/phppgadmin:7
+    environment:
+      - DATABASE_HOST=db
+      - DATABASE_PORT_NUMBER=7432
+    ports:
+      - '1234:8080'
     depends_on:
       - db
