@@ -1,7 +1,10 @@
 from django.contrib import admin
 from django.urls import path
-from api.views import import_order
+
+from api import views
+
 
 urlpatterns = [
-    path('import-order/', import_order)
+    path('', views.api_root),
+    path('import-order/', views.import_order, name='import-order')
 ]
