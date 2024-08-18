@@ -3,6 +3,11 @@ from django.db import models
 # Create your models here.
 
 
+class Customer(models.Model):
+    username = models.CharField(max_length=255, unique=True)
+    email = models.EmailField(unique=True)
+
+
 class Product(models.Model):
     name = models.CharField(max_length=255)
     price = models.PositiveIntegerField()
@@ -17,6 +22,10 @@ class Order(models.Model):
     # Relationship with Product
     products = models.ManyToManyField(
         Product, through="OrderProduct", related_name="orders"
+    )
+
+    customer = models.ForeignKey(
+        Customer, on_delete=models.CASCADE, related_name="orders"
     )
 
 
