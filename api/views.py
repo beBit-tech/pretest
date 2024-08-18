@@ -7,17 +7,12 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .models import Order
-from .serializers import OrderSerializer
+from .serializers import CustomerSerializer, OrderSerializer, ProductSerializer
 
 # Create your views here.
 
 
 ACCEPTED_TOKEN = "omni_pretest_token"
-
-
-# Original function to check api aceess token
-def validate_token(token):
-    return token == ACCEPTED_TOKEN
 
 
 def check_token(func):
@@ -36,15 +31,6 @@ def check_token(func):
 @api_view(["POST"])
 @check_token
 def import_order(request):
-    # The original token validation code has been replaced by the @require_token decorator.
-
-    # Extract the token from the request headers
-    # token = request.headers.get('Authorization')
-
-    # Validate the extracted token
-    # if not validate_token(token):
-    # return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
-
     # Parse the data from request using serializer
     serializer = OrderSerializer(data=request.data)
 
@@ -53,9 +39,29 @@ def import_order(request):
         # save the valid data
         order = serializer.save()
         return Response(
-            {"order_id": order.id, "order": OrderSerializer(order).data},
+            serializer.data,
             status=status.HTTP_201_CREATED,
         )
 
     # If data is invalid, return a 400 response
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@check_token
+def create_customer(request):
+    serializer = CustomerSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@check_token
+def create_product(request):
+    serializer = ProductSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
