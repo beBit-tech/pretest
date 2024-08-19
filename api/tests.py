@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Customer, Order
+from .models import Customer, Order, Product
 
 
 class CustomerTestAPITest(APITestCase):
@@ -73,15 +73,91 @@ class CustomerTestAPITest(APITestCase):
         self.assertEqual(Customer.objects.count(), 1)
 
 
+class ProductTestCase(APITestCase):
+    def setUp(self):
+        self.url = reverse("create_product")
+        self.valid_token = "omni_pretest_token"
+        self.invalid_token = "invalid_token"
+        self.valid_data = {
+            "name": "Product A",
+            "price": 100,
+            "quantity": 50,
+        }
+        self.invalid_price_data = {
+            "name": "Product A",
+            "price": -100,
+            "quantity": 50,
+        }
+        self.invalid_quantity_data = {
+            "name": "Product A",
+            "price": 100,
+            "quantity": -50,
+        }
+
+    def test_create_product_with_valid_token_and_data(self):
+        response = self.client.post(
+            self.url,
+            self.valid_data,
+            format="json",
+            HTTP_AUTHORIZATION=self.valid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Product.objects.count(), 1)
+        self.assertEqual(Product.objects.get().name, "Product A")
+
+    def test_create_product_with_invild_token(self):
+        response = self.client.post(
+            self.url,
+            self.valid_data,
+            format="json",
+            HTTP_AUTHORIZATION=self.invalid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(Product.objects.count(), 0)
+
+    def test_create_product_invalid_price_data(self):
+        response = self.client.post(
+            self.url,
+            self.invalid_price_data,
+            format="json",
+            HTTP_AUTHORIZATION=self.valid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_product_invalid_quantity_data(self):
+        response = self.client.post(
+            self.url,
+            self.invalid_quantity_data,
+            format="json",
+            HTTP_AUTHORIZATION=self.valid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_duplicate_product(self):
+        self.client.post(
+            self.url,
+            self.valid_data,
+            format="json",
+            HTTP_AUTHORIZATION=self.valid_token,
+        )
+        response = self.client.post(
+            self.url,
+            self.valid_data,
+            format="json",
+            HTTP_AUTHORIZATION=self.valid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
 # Create your tests here.
 class OrderTestCase(APITestCase):
     pass
     # def setUp(self):
     #     self.url = reverse("import_order")
     #     self.valid_token = "omni_pretest_token"
-    #     self.invail_token = "invail_token"
+    #     self.invalid_token = "invalid_token"
     #     self.valid_data = {"order_number": "ORD20240818012911", "total_price": "10000"}
-    #     self.invail_data = {"order_number": "", "total_price": "10000"}
+    #     self.invalid_data = {"order_number": "", "total_price": "10000"}
     #
     # def test_import_order_with_valid_token_and_data(self):
     #     response = self.client.post(
@@ -99,7 +175,7 @@ class OrderTestCase(APITestCase):
     #         self.url,
     #         self.valid_data,
     #         format="json",
-    #         HTTP_AUTHORIZATION=self.invail_token,
+    #         HTTP_AUTHORIZATION=self.invalid_token,
     #     )
     #     self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     #     self.assertEqual(Order.objects.count(), 0)
@@ -112,7 +188,7 @@ class OrderTestCase(APITestCase):
     # def test_import_order_with_invalid_data(self):
     #     response = self.client.post(
     #         self.url,
-    #         self.invail_data,
+    #         self.invalid_data,
     #         format="json",
     #         HTTP_AUTHORIZATION=self.valid_token,
     #     )
