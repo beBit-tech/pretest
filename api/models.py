@@ -9,7 +9,7 @@ class Customer(models.Model):
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     price = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField(default=0)
 
