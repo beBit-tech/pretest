@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import Order
+from .models import Customer, Order, Product
 from .serializers import CustomerSerializer, OrderSerializer, ProductSerializer
 
 # Create your views here.
@@ -65,3 +65,30 @@ def create_product(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+@check_token
+def get_products(request):
+    products = Product.objects.all()
+    serializer = ProductSerializer(products, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@check_token
+def get_orders_by_customer(request, username):
+    customer = Customer.objects.get(username=username)
+    try:
+        print(customer)
+    except Customer.DoesnotExist:
+        return Response(
+            {"error": "Customer not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+    orders = Order.objects.filter(customer=customer)
+    serializer = OrderSerializer(orders, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # if serializer.is_valid():
+    # return Response(serializer.data, status=status.HTTP_201_CREATED)
+    # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
