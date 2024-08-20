@@ -7,6 +7,11 @@ The following commit hashes correspond to the requirements:
 - **Replace Token Check with Decorator**: Commit [46a224faccd74879996eabb11d2d79f1edb390e3](https://github.com/cpching/pretest/commit/46a224faccd74879996eabb11d2d79f1edb390e3)
 - **Extend Order Model**: Commit [6d58895ef007f0e52048959d83a323a2b01c2a39](https://github.com/cpching/pretest/commit/6d58895ef007f0e52048959d83a323a2b01c2a39)
 - **Creative Extensions**: The rest of the commits
+    - Add a New `Customer` Model 
+    - Add 4 APIs:
+        - 2 POST Method APIs: Create Customer API and Create Product API
+        - 2 GET Method APIs: Get Orders by Customer API and Get Products API
+    - Add Respective Unit Tests
 
 
 ## Setup Environment
