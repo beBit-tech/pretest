@@ -24,7 +24,6 @@ class OrderProductSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderProductSerializer(many=True, read_only=True)
     customer = serializers.SlugRelatedField(
         queryset=Customer.objects.all(), slug_field="username"
     )
@@ -37,6 +36,5 @@ class OrderSerializer(serializers.ModelSerializer):
             "total_price",
             "created_time",
             "customer",
-            "items",
         ]
         read_only_fields = ["created_time"]

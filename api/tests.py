@@ -182,25 +182,16 @@ class OrderTestCase(APITestCase):
     def setUp(self):
         self.url = reverse("import_order")
         self.customer = Customer.objects.create(username="user", email="user@test.com")
-        self.product1 = Product.objects.create(name="ProductA", price=200, quantity=10)
-        self.product2 = Product.objects.create(name="ProductB", price=300, quantity=50)
         self.valid_token = "omni_pretest_token"
         self.invalid_token = "invalid_token"
         self.valid_data = {
             "total_price": 1300,
             "order_number": "ORD20240820012345",
-            "customer": self.customer.username,
-            "products": [
-                {"name": "ProductA", "quantity": 2},
-                {"name": "ProductB", "quantity": 3},
-            ],
+            "customer": self.customer.username
         }
         self.invalid_data = {
             "order_number": "ORD20240820012345",
-            "customer": self.customer.username,
-            "products": [
-                {"name": "ProductC", "quantity": 2},
-            ],
+            "customer": self.customer.username
         }
 
     def test_import_order_with_valid_token_and_data(self):
