@@ -73,7 +73,7 @@ class CustomerTestAPITest(APITestCase):
         self.assertEqual(Customer.objects.count(), 1)
 
 
-class ProductTestCase(APITestCase):
+class CreateProductTestCase(APITestCase):
     def setUp(self):
         self.url = reverse("create_product")
         self.valid_token = "omni_pretest_token"
@@ -147,6 +147,34 @@ class ProductTestCase(APITestCase):
             HTTP_AUTHORIZATION=self.valid_token,
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class GetProductsAPITest(APITestCase):
+    def setUp(self):
+        Product.objects.create(name="ProductA", price=200, quantity=10)
+        Product.objects.create(name="ProductB", price=300, quantity=50)
+        Product.objects.create(name="ProductC", price=500, quantity=30)
+        self.url = reverse("get_products")
+        self.valid_token = "omni_pretest_token"
+        self.invalid_token = "invalid_token"
+
+    def test_get_products_with_valid_token(self):
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=self.valid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+        self.assertEqual(response.data[0]["name"], "ProductA")
+        self.assertEqual(response.data[1]["name"], "ProductB")
+        self.assertEqual(response.data[2]["name"], "ProductC")
+
+    def test_get_products_with_invalid_token(self):
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=self.invalid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 # Create your tests here.
