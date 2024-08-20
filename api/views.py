@@ -88,7 +88,3 @@ def get_orders_by_customer(request, username):
     orders = Order.objects.filter(customer=customer)
     serializer = OrderSerializer(orders, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
-
-    # if serializer.is_valid():
-    # return Response(serializer.data, status=status.HTTP_201_CREATED)
-    # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

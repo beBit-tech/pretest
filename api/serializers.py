@@ -25,6 +25,9 @@ class OrderProductSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderProductSerializer(many=True, read_only=True)
+    customer = serializers.SlugRelatedField(
+        queryset=Customer.objects.all(), slug_field="username"
+    )
 
     class Meta:
         model = Order

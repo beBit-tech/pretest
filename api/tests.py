@@ -179,46 +179,63 @@ class GetProductsAPITest(APITestCase):
 
 # Create your tests here.
 class OrderTestCase(APITestCase):
-    pass
-    # def setUp(self):
-    #     self.url = reverse("import_order")
-    #     self.valid_token = "omni_pretest_token"
-    #     self.invalid_token = "invalid_token"
-    #     self.valid_data = {"order_number": "ORD20240818012911", "total_price": "10000"}
-    #     self.invalid_data = {"order_number": "", "total_price": "10000"}
-    #
-    # def test_import_order_with_valid_token_and_data(self):
-    #     response = self.client.post(
-    #         self.url,
-    #         self.valid_data,
-    #         format="json",
-    #         HTTP_AUTHORIZATION=self.valid_token,
-    #     )
-    #     self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-    #     self.assertIn("order_id", response.data)
-    #     self.assertEqual(Order.objects.count(), 1)
-    #
-    # def test_import_order_with_invalid_token(self):
-    #     response = self.client.post(
-    #         self.url,
-    #         self.valid_data,
-    #         format="json",
-    #         HTTP_AUTHORIZATION=self.invalid_token,
-    #     )
-    #     self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    #     self.assertEqual(Order.objects.count(), 0)
-    #
-    # def test_import_order_with_missing_token(self):
-    #     response = self.client.post(self.url, self.valid_data, format="json")
-    #     self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    #     self.assertEqual(Order.objects.count(), 0)
-    #
-    # def test_import_order_with_invalid_data(self):
-    #     response = self.client.post(
-    #         self.url,
-    #         self.invalid_data,
-    #         format="json",
-    #         HTTP_AUTHORIZATION=self.valid_token,
-    #     )
-    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    #     self.assertEqual(Order.objects.count(), 0)
+    def setUp(self):
+        self.url = reverse("import_order")
+        self.customer = Customer.objects.create(username="user", email="user@test.com")
+        self.product1 = Product.objects.create(name="ProductA", price=200, quantity=10)
+        self.product2 = Product.objects.create(name="ProductB", price=300, quantity=50)
+        self.valid_token = "omni_pretest_token"
+        self.invalid_token = "invalid_token"
+        self.valid_data = {
+            "total_price": 1300,
+            "order_number": "ORD20240820012345",
+            "customer": self.customer.username,
+            "products": [
+                {"name": "ProductA", "quantity": 2},
+                {"name": "ProductB", "quantity": 3},
+            ],
+        }
+        self.invalid_data = {
+            "order_number": "ORD20240820012345",
+            "customer": self.customer.username,
+            "products": [
+                {"name": "ProductC", "quantity": 2},
+            ],
+        }
+
+    def test_import_order_with_valid_token_and_data(self):
+        response = self.client.post(
+            self.url,
+            self.valid_data,
+            format="json",
+            HTTP_AUTHORIZATION=self.valid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(Order.objects.get().order_number, "ORD20240820012345")
+        self.assertEqual(Order.objects.get().total_price, 1300)
+
+    def test_import_order_with_invalid_token(self):
+        response = self.client.post(
+            self.url,
+            self.valid_data,
+            format="json",
+            HTTP_AUTHORIZATION=self.invalid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_import_order_with_missing_token(self):
+        response = self.client.post(self.url, self.valid_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_import_order_with_invalid_data(self):
+        response = self.client.post(
+            self.url,
+            self.invalid_data,
+            format="json",
+            HTTP_AUTHORIZATION=self.valid_token,
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Order.objects.count(), 0)
