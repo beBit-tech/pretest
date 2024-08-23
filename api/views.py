@@ -1,13 +1,20 @@
-from django.shortcuts import render
-from django.http import HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponseBadRequest
 from rest_framework.decorators import api_view
-# Create your views here.
-
-
-ACCEPTED_TOKEN = ('omni_pretest_token')
-
+from .models import Order
+from .decorators import validate_token
 
 @api_view(['POST'])
+@validate_token
 def import_order(request):
-    # Add your code here
-    return HttpResponseBadRequest()
+    order_number = request.data.get('order_number')
+    total_price = request.data.get('total_price')
+    
+    if not order_number or not total_price:
+        return HttpResponseBadRequest("Missing required fields")
+
+    try:
+        order = Order(order_number=order_number, total_price=total_price)
+        order.save()
+        return JsonResponse({"message": "Order created successfully", "order_id": order.id})
+    except Exception as e:
+        return HttpResponseBadRequest(f"An error occurred: {str(e)}")
