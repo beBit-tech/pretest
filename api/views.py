@@ -5,22 +5,18 @@ from rest_framework import status
 from rest_framework.response import Response
 from .models import Order
 from .serializers import OrderSerializer
+from .AccessValidation import validate_token
 
-ACCEPTED_TOKEN = ('omni_pretest_token')
-
+#old validation logic
+'''
 def validate_token(token):
     return token == ACCEPTED_TOKEN
+'''
+
 
 @api_view(['POST'])
+@validate_token  # decorator
 def import_order(request):
-    token = request.headers.get('Authorization')
-
-    if not token:
-        return Response({'error': 'Token missing'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    if not validate_token(token):
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
-
     serializer = OrderSerializer(data=request.data)
 
     # Data Validation
