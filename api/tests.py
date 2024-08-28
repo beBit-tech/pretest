@@ -30,6 +30,18 @@ class OrderTestCase(APITestCase):
         self.assertEqual(ProductOrder.objects.count(), 2)
         self.assertEqual(Order.objects.get().order_number, 'ORD-001')
 
+    def test_import_order_nonexistent_product(self):
+        self.client.credentials(HTTP_AUTHORIZATION=self.valid_token)
+        invalid_payload = self.valid_payload.copy()
+        invalid_payload['products'].append({'product_id': 9999, 'quantity': 1})
+        response = self.client.post(self.import_order_url, invalid_payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertEqual(response.data['error'], 'Product with id 9999 does not exist')
+        # Ensure no order was created
+        self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(ProductOrder.objects.count(), 0)
+
     def test_import_order_missing_token(self):
         response = self.client.post(self.import_order_url, self.valid_payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
