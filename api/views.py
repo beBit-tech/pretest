@@ -1,10 +1,11 @@
 from django.shortcuts import render
 from django.http import HttpResponseBadRequest
+from django.db import transaction
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
-from .models import Order
-from .serializers import OrderSerializer
+from .models import Order, Product, ProductOrder
+from .serializers import OrderSerializer, ProductOrderSerializer
 from .AccessValidation import validate_token
 
 #old validation logic
@@ -15,17 +16,35 @@ def validate_token(token):
 
 
 @api_view(['POST'])
-@validate_token  # decorator
+@validate_token
 def import_order(request):
-    serializer = OrderSerializer(data=request.data)
+    order_data = request.data.copy()
+    products_data = order_data.pop('products', [])
+    
+    order_serializer = OrderSerializer(data=order_data)
+    if not order_serializer.is_valid():
+        return Response(order_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # Data Validation
-    if serializer.is_valid():
-        order = serializer.save()
-        return Response({
-            'order_id': order.id,
-            'order': OrderSerializer(order).data
-        }, status=status.HTTP_201_CREATED)
-
-    # Data invalid = 400 response 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        with transaction.atomic():
+            order = order_serializer.save()
+            
+            for product_data in products_data:
+                product_id = product_data.get('product_id')
+                quantity = product_data.get('quantity', 1)
+                
+                try:
+                    product = Product.objects.get(id=product_id)
+                except Product.DoesNotExist:
+                    # Raise an exception to trigger the transaction rollback
+                    raise ValueError(f'Product with id {product_id} does not exist')
+                
+                ProductOrder.objects.create(order=order, product=product, quantity=quantity)
+            
+            return Response({
+                'order_id': order.id,
+                'order': OrderSerializer(order).data
+            }, status=status.HTTP_201_CREATED)
+    except ValueError as e:
+        # Catch the ValueError and return an appropriate response
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
