@@ -75,3 +75,44 @@ class OrderTestCase(APITestCase):
         response = self.client.post(self.import_order_url, self.valid_payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('order_number', response.data)
+
+    def test_get_product(self):
+        self.client.credentials(HTTP_AUTHORIZATION=self.valid_token)
+        url = reverse('get_product', kwargs={'product_id': self.product1.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], self.product1.id)
+        self.assertEqual(response.data['name'], self.product1.name)
+        self.assertEqual(response.data['price'], self.product1.price)
+        self.assertEqual(response.data['amount'], self.product1.amount)
+
+    def test_get_nonexistent_product(self):
+        self.client.credentials(HTTP_AUTHORIZATION=self.valid_token)
+        url = reverse('get_product', kwargs={'product_id': 9999})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn('error', response.data)
+
+    def test_get_order(self):
+        self.client.credentials(HTTP_AUTHORIZATION=self.valid_token)
+        # create an order
+        response = self.client.post(self.import_order_url, self.valid_payload, format='json')
+        #print(response.data)  # debug
+        order_id = response.data['order_id']
+
+        # get the order
+        url = reverse('get_order', kwargs={'order_id': order_id})
+        response = self.client.get(url)
+        #print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], order_id)
+        self.assertEqual(response.data['order_number'], self.valid_payload['order_number'])
+        self.assertEqual(response.data['total_price'], self.valid_payload['total_price'])
+        self.assertEqual(len(response.data['products']), 2)
+
+    def test_get_nonexistent_order(self):
+        self.client.credentials(HTTP_AUTHORIZATION=self.valid_token)
+        url = reverse('get_order', kwargs={'order_id': 9999})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn('error', response.data)
