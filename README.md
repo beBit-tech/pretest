@@ -7,7 +7,7 @@
     * Created-time
 
 2. Construct **import_order** api ( POST method ):
-    * Validate access token from request data ( accepted token is defined in **api/AccessValidation.py** )
+    * Validate access token from request data ( validation logic is defined in **api/AccessValidation.py** )
 
     * Parse data and Save to corresponding fields
 
