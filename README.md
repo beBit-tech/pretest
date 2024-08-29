@@ -1,60 +1,34 @@
 # Omni Pretest
-## Setup Environment
-* Download [docker](https://www.docker.com/get-started) and Install
+## Finished Features
 
-* [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) this **pretest** project to your own repository
-
-* Clone **pretest** project from your own repository
-    ```
-    git clone https://github.com/[your own account]/pretest.git
-    ```
-
-* Checkout **pretest** directory
-    ```
-    cd pretest
-    ```
-
-* Start docker container
-    ```
-    docker-compose up
-    ```
-
-* Enter activated **pretest-web-1** container
-    ```
-    docker exec -it pretest-web-1 bash
-    ```
-    Note:
-
-    * This container codebase is connected to **pretest** project local codebase
-    * If you need to migrate migration files or test testcases, make sure do it in **pretest-web-1** container
----
-## Requirements
-* Construct **Order** Model in **api** app
-
-    The below information is necessary in **Order** model:
+1. Construct **Order** Model in **api** app with the attributes:
     * Order-number
     * Total-price
     * Created-time
 
-* Construct **import_order** api ( POST method )
-    * Validate access token from request data
-    
-        ( accepted token is defined in **api/views.py** )
+2. Construct **import_order** api ( POST method ):
+    * Validate access token from request data ( accepted token is defined in **api/AccessValidation.py** )
+
     * Parse data and Save to corresponding fields
-* Construct api unittest
 
----
-## Advanced Requirements ( optional )
-* Replace the statement of checking api access token with a decorator
+3. Construct **import_order** api unittest
 
-* Extend Order model
+4. Replace the statement of checking api access token with a decorator
+
+5. Extend Order model
     * Construct **Product** model
-    * Build relationships between **Order** and **Product** model
+    * manage relationships between **Order** and **Product** model through **ProductOrder** model
 
-* Get creative and Extend anything you want  
----
-## Submit
-* After receiving this pretest, you have to finish it in 7 days
-* Create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) and name it with your name ( 王小明 - 面試 )
+6. order creation
+    * update the **import_order** to create ProductOrder to record order informations
+    * make the transaction atomic ensure all the database operations are committed,otherwise rollback
 
-* Feel free to let us know if there is any question: sophie.lee@bebit-tech.com
+7. test feat no.6
+    * non-exist product test
+
+8. get order and product information api implementation
+    * provide URL endpoints to access product & order detail (GET method)
+
+9. Construct unittest to verify the functionality of features  no.7
+    * base functionality test
+    * nonexist item test
