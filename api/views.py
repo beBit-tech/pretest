@@ -9,12 +9,12 @@ ACCEPTED_TOKEN = 'omni_pretest_token'
 @api_view(['POST'])
 def import_order(request):
     # Validate access token
-    token = request.data.get('token')
-    if token != ACCEPTED_TOKEN:
-        return Response({"error": "Invalid token"}, status=401)  # 使用 401 錯誤碼
+    auth_header = request.headers.get('Authorization')
+    if auth_header != ACCEPTED_TOKEN:
+        return Response({"error": "Invalid token"}, status=401)
 
     # Parse data
-    order_data = request.data.get('order')
+    order_data = request.data
     if not order_data:
         return Response({"error": "No order data provided"}, status=400)
 
