@@ -1,8 +1,8 @@
-from django.shortcuts import render
-from django.http import HttpResponseBadRequest
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Order
+from .serializers import OrderSerializer
 
 ACCEPTED_TOKEN = 'omni_pretest_token'
 
@@ -14,15 +14,12 @@ def import_order(request):
         return Response({"error": "Invalid token"}, status=401)
 
     # Parse data
-    order_data = request.data
-    if not order_data:
-        return Response({"error": "No order data provided"}, status=400)
+    serializer = OrderSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response({"error": serializer.errors}, status=400)
 
     # Save order to the database
-    try:
-        order = Order.objects.create(**order_data)
-    except Exception as e:
-        return Response({"error": f"Error saving order: {str(e)}"}, status=400)
+    order = serializer.save()
 
     # Return success response with total_price
     return Response({
