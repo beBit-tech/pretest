@@ -24,5 +24,9 @@ def import_order(request):
     except Exception as e:
         return Response({"error": f"Error saving order: {str(e)}"}, status=400)
 
-    # Return success response
-    return Response({"message": "Order imported successfully", "order_id": order.id}, status=201)
+    # Return success response with total_price
+    return Response({
+        "message": "Order imported successfully",
+        "order_id": order.id,
+        "total_price": order.total_price
+    }, status=201)
