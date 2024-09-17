@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from .models import Order
 from .serializers import OrderSerializer
 from functools import wraps
+from django.db import transaction
 
 ACCEPTED_TOKEN = 'omni_pretest_token'
 
@@ -18,6 +19,7 @@ def token_required(view_func):
 
 @api_view(['POST'])
 @token_required
+@transaction.atomic 
 def import_order(request):
     # Parse data
     serializer = OrderSerializer(data=request.data)
