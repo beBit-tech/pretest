@@ -6,8 +6,10 @@ class MockProductRepository(RepositoryInterface):
         self.products = {}
         
     def add(self, data_map: dict) -> None:
-        self.products[data_map[id]] = data_map
+        self.products[data_map["number"]] = data_map
         
-    def get_by_id(self, id: str) -> dict:
-        return self.products[id]
+    def get_by_number(self, number: str) -> dict:
+        return self.products.get(number, None)
     
+    def check_products_exist(self, product_numbers: list) -> bool:
+        return all(product_number in self.products for product_number in product_numbers)

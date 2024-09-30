@@ -1,3 +1,9 @@
+from typing import List
+from dataclasses import dataclass
+from datetime import datetime
+
+@dataclass
 class ImportOrderInput:
-    def __init__(self) -> None:
-        pass
+    total_price: float 
+    created_time: datetime
+    order_lines: List[dict]

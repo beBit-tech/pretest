@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+
+@dataclass
 class CreateProductOutput:
-    def __init__(self) -> None:
-        pass
+    product_number: str
+    result: bool
+    exception: Exception = None

@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+
 from api.use_case.product.create_product import CreateProduct
 from api.use_case.product.create_product_input import CreateProductInput
 from api.use_case.product.create_product_output import CreateProductOutput
@@ -16,10 +17,9 @@ class TestCreateProduct(SimpleTestCase):
         
         input = CreateProductInput(name = name, price = price)
         output: CreateProductOutput = self.create_product.execute(input = input)
-        product_data = self.repo.get_by_id(output.get_product_id())
+        product_data = self.repo.get_by_number(output.product_number)
         
-        self.assertIsNotNone(output.get_exception())
-        self.assertTrue(output.get_result())
+        self.assertIsNone(output.exception)
+        self.assertTrue(output.result)
         self.assertEqual(name, product_data["name"])
         self.assertEqual(price, product_data["price"])
-        
