@@ -11,5 +11,8 @@ class MockProductRepository(RepositoryInterface):
     def get_by_number(self, number: str) -> dict:
         return self.products.get(number, None)
     
-    def check_products_exist(self, product_numbers: list) -> bool:
-        return all(product_number in self.products for product_number in product_numbers)
+    def check_products_exist(self, product_numbers: list) -> set:
+        existing_numbers = set(product_numbers) & self.products.keys()
+        missing_numbers = set(product_numbers) - existing_numbers
+        
+        return missing_numbers

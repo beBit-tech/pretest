@@ -1,9 +1,8 @@
-# adapter/repository.py
-from api.adapter.repository.product.product_model import Product  # Import 你定義的 Product 模型
+from api.adapter.repository.product.product_model import Product
 from api.use_case.repository.repository_interface import RepositoryInterface
 
 class ProductRepository(RepositoryInterface):
-    def add(self, data_map: dict) -> int:
+    def add(self, data_map: dict):
         existing_product = Product.objects.filter(name=data_map.get('name')).first()
 
         if existing_product:
@@ -13,6 +12,7 @@ class ProductRepository(RepositoryInterface):
 
     def get_by_number(self, number: str) -> dict:
         try:
+            
             product = Product.objects.get(number=number)
             return {
                 'number': product.number,
@@ -20,3 +20,10 @@ class ProductRepository(RepositoryInterface):
             }
         except Product.DoesNotExist:
             raise Exception(f"Product with number {number} not found")
+
+    def check_products_exist(self, product_numbers: list) -> set:
+        existing_products = Product.objects.filter(number__in=product_numbers)
+        existing_numbers = set(existing_products.values_list('number', flat=True))
+        missing_numbers = set(product_numbers) - existing_numbers
+        
+        return missing_numbers

@@ -12,7 +12,7 @@ from api.adapter.repository.product.product_repository import ProductRepository
 @token_required
 @api_view(['POST'])
 def create_product(request):
-    serializer = ProductSerializer(data=request.data)
+    serializer = ProductSerializer(data = request.data)
     if serializer.is_valid():
         validated_data = serializer.validated_data
         product_name = validated_data["name"]

@@ -41,9 +41,9 @@ class TestImportOrder(SimpleTestCase):
         
         self.assertIsNone(output.exception)
         self.assertTrue(output.result)
-        self.assertEqual(total_price, order_data["total_price"])
-        self.assertEqual(self.created_time, order_data["created_time"])
-        self.assertEqual(order_lines, order_data["order_lines"])
+        self.assertEqual(order_data["total_price"], total_price)
+        self.assertEqual(order_data["created_time"], self.created_time)
+        self.assertEqual(order_data["order_lines"], order_lines)
         
     def test_import_order_with_one_non_existent_product(self):
         _ = self.__prepare_one_product(name = "Apple", price = 12.5)
@@ -82,9 +82,9 @@ class TestImportOrder(SimpleTestCase):
         
         self.assertIsNone(output.exception)
         self.assertTrue(output.result)
-        self.assertEqual(total_price, order_data["total_price"])
-        self.assertEqual(self.created_time, order_data["created_time"])
-        self.assertEqual(order_lines, order_data["order_lines"])
+        self.assertEqual(order_data["total_price"], total_price)
+        self.assertEqual(order_data["created_time"], self.created_time)
+        self.assertEqual(order_data["order_lines"], order_lines)
         
     def test_import_order_with_existent_and_non_existent_product(self):
         product_number = self.__prepare_one_product(name = "Banana", price = 6.5)

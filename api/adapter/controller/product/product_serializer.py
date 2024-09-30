@@ -5,6 +5,6 @@ class ProductSerializer(serializers.Serializer):
     price = serializers.FloatField(required=True)
 
     def validate(self, data):
-        if 'price' in data and data['price'] <= 0:
+        if data['price'] <= 0:
             raise serializers.ValidationError("Price must be greater than 0")
         return data

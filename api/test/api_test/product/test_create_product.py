@@ -48,6 +48,15 @@ class CreateProductTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
+    def test_create_product_with_negative_price(self):
+        invalid_payload = {
+            "name": "",
+            "price": -12.5
+        }
+        response = self.client.post(self.url, data = invalid_payload, format="json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
     def test_create_product_without_token(self):
         valid_payload = {
             "name": "Apple",

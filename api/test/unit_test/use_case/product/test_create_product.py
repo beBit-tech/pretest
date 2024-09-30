@@ -21,5 +21,5 @@ class TestCreateProduct(SimpleTestCase):
         
         self.assertIsNone(output.exception)
         self.assertTrue(output.result)
-        self.assertEqual(name, product_data["name"])
-        self.assertEqual(price, product_data["price"])
+        self.assertEqual(product_data["name"], name)
+        self.assertEqual(product_data["price"], price)

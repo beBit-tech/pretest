@@ -7,8 +7,9 @@ from api.use_case.mapper.order.order_mapper import OrderMapper
 from api.entity.order.order import Order
 
 class MissingProductError(Exception):
-    def __init__(self, product):
-        super().__init__(f"Product not exist")
+    def __init__(self, product_numbers: set):
+        product_numbers = ', '.join(product_numbers)
+        super().__init__(f"Product {product_numbers} not exist")
 
 class ImportOrder:
     def __init__(self, order_repo: RepositoryInterface, product_repo: RepositoryInterface) -> None:
@@ -27,5 +28,6 @@ class ImportOrder:
     
     def __check_products_exist(self, product_lines: List[dict]):
         product_numbers = [line["product_number"] for line in product_lines]
-        if not self.product_repo.check_products_exist(product_numbers):
-            raise MissingProductError
+        missing_product_numbers = self.product_repo.check_products_exist(product_numbers)
+        if missing_product_numbers:
+            raise MissingProductError(missing_product_numbers)
