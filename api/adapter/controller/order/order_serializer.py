@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 class OrderLineSerializer(serializers.Serializer):
-    product_number = serializers.CharField(max_length = 100, required = True)
+    number = serializers.CharField(max_length = 100, required = True)
     quantity = serializers.IntegerField(min_value = 1, required = True)
 
 class OrderSerializer(serializers.Serializer):

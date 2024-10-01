@@ -21,10 +21,10 @@ class CreateProductTest(APITestCase):
         
         response: HttpResponse = self.client.post(self.url, data = valid_payload, format = "json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
         response_data = json.loads(response.content.decode('utf-8'))
-        product = Product.objects.filter(number = response_data["product_number"]).first()
+        product = Product.objects.filter(number = response_data["number"]).first()
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("product_number", response_data)
+        self.assertIn("number", response_data)
         self.assertEqual(response_data["message"], "Product created successfully.")
         self.assertIsNotNone(product)
         self.assertEqual(product.price, 12.5)

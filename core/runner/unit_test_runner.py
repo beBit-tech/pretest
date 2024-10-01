@@ -1,5 +1,5 @@
 from django.test.runner import DiscoverRunner
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TransactionTestCase
 from unittest import TestSuite
 
 class UnitTestRunner(DiscoverRunner):
@@ -13,7 +13,7 @@ class UnitTestRunner(DiscoverRunner):
         for test in suite:
             if hasattr(test, '__class__'):
                 test_class = test.__class__
-                if issubclass(test_class, SimpleTestCase):
+                if issubclass(test_class, SimpleTestCase) and not issubclass(test_class, TransactionTestCase):
                     filtered_tests.append(test)
 
         return TestSuite(filtered_tests)

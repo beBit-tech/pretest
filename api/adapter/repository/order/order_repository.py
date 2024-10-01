@@ -10,7 +10,7 @@ class OrderRepository(RepositoryInterface):
         )
         
         for line in data_map["order_lines"]:
-            product_number = line["product_number"]
+            product_number = line["number"]
             quantity = line["quantity"]
             
             OrderProduct.objects.create(

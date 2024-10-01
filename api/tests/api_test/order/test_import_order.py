@@ -5,7 +5,6 @@ from django.urls import reverse
 from django.http import HttpResponse
 
 from api.adapter.repository.order.order_model import Order, OrderProduct
-from api.adapter.repository.product.product_model import Product
 
 class ImportOrderTest(APITestCase):
 
@@ -31,7 +30,7 @@ class ImportOrderTest(APITestCase):
         response: HttpResponse = self.client.post(create_product_url, data = payload, format = "json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
         response_data = json.loads(response.content.decode('utf-8'))
         
-        return response_data["product_number"]
+        return response_data["number"]
     
     def test_import_order(self):
         valid_payload = {
@@ -39,11 +38,11 @@ class ImportOrderTest(APITestCase):
             "created_time": "2024-10-01T10:00:00",
             "order_lines": [
                 {
-                    "product_number": self.product_number_1,
+                    "number": self.product_number_1,
                     "quantity": 2
                 },
                 {
-                    "product_number": self.product_number_2,
+                    "number": self.product_number_2,
                     "quantity": 3
                 }
             ]
@@ -80,7 +79,7 @@ class ImportOrderTest(APITestCase):
             "created_time": "2024-10-01T10:00:00",
             "order_lines": [
                 {
-                    "product_number": str(uuid.uuid4()),
+                    "number": str(uuid.uuid4()),
                     "quantity": 2
                 },
             ]
@@ -96,7 +95,7 @@ class ImportOrderTest(APITestCase):
             "created_time": "2024-10-01T10:00:00",
             "order_lines": [
                 {
-                    "product_number": self.product_number_1,
+                    "number": self.product_number_1,
                     "quantity": 2
                 },
             ]
@@ -112,7 +111,7 @@ class ImportOrderTest(APITestCase):
             "created_time": "",
             "order_lines": [
                 {
-                    "product_number": self.product_number_1,
+                    "number": self.product_number_1,
                     "quantity": 2
                 },
             ]
@@ -127,7 +126,7 @@ class ImportOrderTest(APITestCase):
             "created_time": "2024-10-01T10:00:00",
             "order_lines": [
                 {
-                    "product_number": "",
+                    "number": "",
                     "quantity": 2
                 },
             ]

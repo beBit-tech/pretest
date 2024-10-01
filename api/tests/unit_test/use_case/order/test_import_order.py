@@ -2,14 +2,14 @@ import uuid
 from datetime import datetime
 from django.test import SimpleTestCase
 
-from api.use_case.order.import_order import ImportOrder
-from api.use_case.order.import_order_input import ImportOrderInput
-from api.use_case.order.import_order_output import ImportOrderOutput
-from api.test.test_double.mock_order_repository import MockOrderRepository
-from api.test.test_double.mock_product_repository import MockProductRepository
-from api.use_case.product.create_product import CreateProduct
-from api.use_case.product.create_product_input import CreateProductInput
-from api.use_case.product.create_product_output import CreateProductOutput
+from api.use_case.order.import_order.import_order import ImportOrder
+from api.use_case.order.import_order.import_order_input import ImportOrderInput
+from api.use_case.order.import_order.import_order_output import ImportOrderOutput
+from api.tests.test_double.mock_order_repository import MockOrderRepository
+from api.tests.test_double.mock_product_repository import MockProductRepository
+from api.use_case.product.create_product.create_product import CreateProduct
+from api.use_case.product.create_product.create_product_input import CreateProductInput
+from api.use_case.product.create_product.create_product_output import CreateProductOutput
 
 class TestImportOrder(SimpleTestCase):
     def setUp(self) -> None:
@@ -24,14 +24,14 @@ class TestImportOrder(SimpleTestCase):
         input = CreateProductInput(name = name, price = price)
         output: CreateProductOutput = create_product.execute(input = input)
         
-        return output.product_number
+        return output.number
     
     def test_import_order_with_one_existent_product(self):
         product_number = self.__prepare_one_product(name = "Apple", price = 12.5)
         quantity = 3
         total_price = 37.5
         order_lines = [
-            {"product_number": product_number,
+            {"number": product_number,
              "quantity": quantity}
             ]
         
@@ -51,7 +51,7 @@ class TestImportOrder(SimpleTestCase):
         quantity = 3
         total_price = 37.5
         order_lines = [
-            {"product_number": random_uuid,
+            {"number": random_uuid,
              "quantity": quantity}
             ]
         
@@ -70,9 +70,9 @@ class TestImportOrder(SimpleTestCase):
         quantity_2 = 2
         total_price = 50.5
         order_lines = [
-            {"product_number": product_number_1,
+            {"number": product_number_1,
              "quantity": quantity_1},
-            {"product_number": product_number_2,
+            {"number": product_number_2,
              "quantity": quantity_2}
             ]
         
@@ -94,9 +94,9 @@ class TestImportOrder(SimpleTestCase):
         quantity_2 = 3
         total_price = 37.5
         order_lines = [
-            {"product_number": product_number,
+            {"number": product_number,
              "quantity": quantity_1},
-            {"product_number": random_uuid,
+            {"number": random_uuid,
              "quantity": quantity_2}
             ]
         

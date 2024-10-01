@@ -4,9 +4,9 @@ from rest_framework import status
 
 from api.adapter.controller.decoractor import token_required
 from api.adapter.controller.order.order_serializer import OrderSerializer
-from api.use_case.order.import_order import ImportOrder
-from api.use_case.order.import_order_input import ImportOrderInput
-from api.use_case.order.import_order_output import ImportOrderOutput
+from api.use_case.order.import_order.import_order import ImportOrder
+from api.use_case.order.import_order.import_order_input import ImportOrderInput
+from api.use_case.order.import_order.import_order_output import ImportOrderOutput
 from api.adapter.repository.product.product_repository import ProductRepository
 from api.adapter.repository.order.order_repository import OrderRepository
 

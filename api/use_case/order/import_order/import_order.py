@@ -1,8 +1,8 @@
 from typing import List
 
 from api.use_case.repository.repository_interface import RepositoryInterface
-from api.use_case.order.import_order_input import ImportOrderInput
-from api.use_case.order.import_order_output import ImportOrderOutput
+from api.use_case.order.import_order.import_order_input import ImportOrderInput
+from api.use_case.order.import_order.import_order_output import ImportOrderOutput
 from api.use_case.mapper.order.order_mapper import OrderMapper
 from api.entity.order.order import Order
 
@@ -27,7 +27,7 @@ class ImportOrder:
         return ImportOrderOutput(order_number = order.number, result = True)
     
     def __check_products_exist(self, product_lines: List[dict]):
-        product_numbers = [line["product_number"] for line in product_lines]
+        product_numbers = [line["number"] for line in product_lines]
         missing_product_numbers = self.product_repo.check_products_exist(product_numbers)
         if missing_product_numbers:
             raise MissingProductError(missing_product_numbers)

@@ -1,6 +1,6 @@
 from api.use_case.repository.repository_interface import RepositoryInterface
-from api.use_case.product.create_product_input import CreateProductInput
-from api.use_case.product.create_product_output import CreateProductOutput
+from api.use_case.product.create_product.create_product_input import CreateProductInput
+from api.use_case.product.create_product.create_product_output import CreateProductOutput
 from api.use_case.mapper.product.product_mapper import ProductMapper
 from api.entity.product.product import Product
 
@@ -13,6 +13,6 @@ class CreateProduct:
             product = Product(name = input.name, price = input.price)
             self.repo.add(ProductMapper.to_dict(entity = product))
         except Exception as e:
-            output = CreateProductOutput(product_number = None, result = False, exception = e)
+            output = CreateProductOutput(number = None, result = False, exception = e)
             return output
-        return CreateProductOutput(product_number = product.number, result = True)
+        return CreateProductOutput(number = product.number, result = True)
