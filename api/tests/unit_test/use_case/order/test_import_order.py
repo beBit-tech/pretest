@@ -18,26 +18,24 @@ class TestImportOrder(SimpleTestCase):
         self.order_repo = MockOrderRepository()
         self.importOrder = ImportOrder(order_repo = self.order_repo, product_repo = self.product_repo)
         
-    def __prepare_one_product(self, name: str, price: float) -> str:
-        create_product = CreateProduct(repo = self.product_repo)
-        
-        input = CreateProductInput(name = name, price = price)
-        output: CreateProductOutput = create_product.execute(input = input)
-        
+    def __create_product(self, name: str, price: float) -> str:
+        output: CreateProductOutput = CreateProduct(repo = self.product_repo).execute(CreateProductInput(name = name, price = price))
         return output.number
     
     def test_import_order_with_one_existent_product(self):
-        product_number = self.__prepare_one_product(name = "Apple", price = 12.5)
+        product_number = self.__create_product(name = "Apple", price = 12.5)
         quantity = 3
         total_price = 37.5
         order_lines = [
-            {"number": product_number,
-             "quantity": quantity}
-            ]
+            {
+                "number": product_number,
+                "quantity": quantity
+            }
+        ]
         
         input = ImportOrderInput(total_price = total_price, created_time = self.created_time, order_lines = order_lines)
         output: ImportOrderOutput = self.importOrder.execute(input = input)
-        order_data = self.order_repo.get_by_number(output.order_number)
+        order_data = self.order_repo.get_by_number(output.number)
         
         self.assertIsNone(output.exception)
         self.assertTrue(output.result)
@@ -46,39 +44,45 @@ class TestImportOrder(SimpleTestCase):
         self.assertEqual(order_data["order_lines"], order_lines)
         
     def test_import_order_with_one_non_existent_product(self):
-        _ = self.__prepare_one_product(name = "Apple", price = 12.5)
+        _ = self.__create_product(name = "Apple", price = 12.5)
         random_uuid = uuid.uuid4()
         quantity = 3
         total_price = 37.5
         order_lines = [
-            {"number": random_uuid,
-             "quantity": quantity}
-            ]
-        
+            {
+                "number": random_uuid,
+                "quantity": quantity
+            }
+        ]
+
         input = ImportOrderInput(total_price = total_price, created_time = self.created_time, order_lines = order_lines)
         output: ImportOrderOutput = self.importOrder.execute(input = input)
-        order_data = self.order_repo.get_by_number(output.order_number)
+        order_data = self.order_repo.get_by_number(output.number)
         
         self.assertIsNotNone(output.exception)
         self.assertFalse(output.result)
         self.assertIsNone(order_data)
         
     def test_import_order_with_multiple_existent_product(self):
-        product_number_1 = self.__prepare_one_product(name = "Apple", price = 12.5)
+        product_number_1 = self.__create_product(name = "Apple", price = 12.5)
         quantity_1 = 3
-        product_number_2 = self.__prepare_one_product(name = "Banana", price = 6.5)
+        product_number_2 = self.__create_product(name = "Banana", price = 6.5)
         quantity_2 = 2
         total_price = 50.5
         order_lines = [
-            {"number": product_number_1,
-             "quantity": quantity_1},
-            {"number": product_number_2,
-             "quantity": quantity_2}
-            ]
+            {
+                "number": product_number_1,
+                "quantity": quantity_1
+            },
+            {
+                "number": product_number_2,
+                "quantity": quantity_2
+            }
+        ]
         
         input = ImportOrderInput(total_price = total_price, created_time = self.created_time, order_lines = order_lines)
         output: ImportOrderOutput = self.importOrder.execute(input = input)
-        order_data = self.order_repo.get_by_number(output.order_number)
+        order_data = self.order_repo.get_by_number(output.number)
         
         self.assertIsNone(output.exception)
         self.assertTrue(output.result)
@@ -87,22 +91,26 @@ class TestImportOrder(SimpleTestCase):
         self.assertEqual(order_data["order_lines"], order_lines)
         
     def test_import_order_with_existent_and_non_existent_product(self):
-        product_number = self.__prepare_one_product(name = "Banana", price = 6.5)
+        product_number = self.__create_product(name = "Banana", price = 6.5)
         quantity_1 = 2
-        _ = self.__prepare_one_product(name = "Apple", price = 12.5)
+        _ = self.__create_product(name = "Apple", price = 12.5)
         random_uuid = uuid.uuid4()
         quantity_2 = 3
         total_price = 37.5
         order_lines = [
-            {"number": product_number,
-             "quantity": quantity_1},
-            {"number": random_uuid,
-             "quantity": quantity_2}
-            ]
+            {
+                "number": product_number,
+                "quantity": quantity_1
+            },
+            {
+                "number": random_uuid,
+                "quantity": quantity_2
+            }
+        ]
         
         input = ImportOrderInput(total_price = total_price, created_time = self.created_time, order_lines = order_lines)
         output: ImportOrderOutput = self.importOrder.execute(input = input)
-        order_data = self.order_repo.get_by_number(output.order_number)
+        order_data = self.order_repo.get_by_number(output.number)
         
         self.assertIsNotNone(output.exception)
         self.assertFalse(output.result)

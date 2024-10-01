@@ -9,7 +9,7 @@ class MockProductRepository(RepositoryInterface):
         self.products.append(data_map)
         
     def get_by_number(self, number: str) -> dict:
-        return next((product for product in self.products if product.get("number") == number))
+        return next((product for product in self.products if product.get("number") == number), None)
     
     def check_products_exist(self, product_numbers: list) -> set:
         existing_numbers = set(product_numbers) & {product["number"] for product in self.products}

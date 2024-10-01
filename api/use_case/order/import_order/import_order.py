@@ -22,9 +22,9 @@ class ImportOrder:
             order = Order(created_time = input.created_time, total_price = input.total_price, order_lines = input.order_lines)
             self.order_repo.add(OrderMapper.to_dict(entity = order))
         except Exception as e:
-            output = ImportOrderOutput(order_number = None, result = False, exception = e)
+            output = ImportOrderOutput(number = None, result = False, exception = e)
             return output
-        return ImportOrderOutput(order_number = order.number, result = True)
+        return ImportOrderOutput(number = order.number, result = True)
     
     def __check_products_exist(self, product_lines: List[dict]):
         product_numbers = [line["number"] for line in product_lines]

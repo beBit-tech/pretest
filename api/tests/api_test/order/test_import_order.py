@@ -51,11 +51,11 @@ class ImportOrderTest(APITestCase):
         response: HttpResponse = self.client.post(self.url, data = valid_payload, format = "json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
         
         response_data = json.loads(response.content.decode('utf-8'))
-        order_number = response_data["order_number"]
+        order_number = response_data["number"]
         order = Order.objects.filter(number = order_number).first()
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("order_number", response_data)
+        self.assertIn("number", response_data)
         self.assertEqual(response_data["message"], "Order created successfully.")
         self.assertIsNotNone(order)
 

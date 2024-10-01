@@ -34,6 +34,8 @@ class TestGetAllProducts(APITestCase):
         response: HttpResponse = self.client.get(self.url, format = "json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
         response_data = json.loads(response.content.decode('utf-8'))
         
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_data["message"], "Fetch products successfully.")
         self.assertEqual(response_data["products"][0]["number"], product_number_1)
         self.assertEqual(response_data["products"][0]["name"], self.valid_payload_1["name"])
         self.assertEqual(response_data["products"][0]["price"], self.valid_payload_1["price"])

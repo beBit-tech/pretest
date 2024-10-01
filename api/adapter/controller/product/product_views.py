@@ -47,7 +47,7 @@ def get_all_products(request):
         return Response({
             'products': output.products,
             'message': 'Fetch products successfully.'
-        }, status=status.HTTP_201_CREATED)
+        }, status=status.HTTP_200_OK)
     else:
         return Response({
             'error': str(output.exception),
