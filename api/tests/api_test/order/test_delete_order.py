@@ -12,7 +12,7 @@ class TestDeleteOrder(APITestCase):
     
     def setUp(self):
         self.client = APIClient()
-        self.url = reverse("delete_order")
+        self.url_name = "delete_order"
         self.ACCEPTED_TOKEN = ('omni_pretest_token')
         
         self.product_number = self.__create_product()
@@ -48,12 +48,9 @@ class TestDeleteOrder(APITestCase):
 
     def test_delete_exist_order(self):
         order_number = self.__import_order()
+        url = reverse(self.url_name, kwargs={'number': order_number})
         
-        valid_payload = {
-            "number": order_number
-        }
-        
-        response: HttpResponse = self.client.delete(self.url, data = valid_payload, format = "json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
+        response: HttpResponse = self.client.delete(url, format = "json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
         response_data = json.loads(response.content.decode('utf-8'))
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -71,36 +68,20 @@ class TestDeleteOrder(APITestCase):
         
     def test_delete_non_existent_order(self):
         _ = self.__import_order()
+        url = reverse(self.url_name, kwargs={'number': str(uuid.uuid4)})
         
-        valid_payload = {
-            "number": str(uuid.uuid4)
-        }
-        
-        response: HttpResponse = self.client.delete(self.url, data = valid_payload, format = "json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
+        response: HttpResponse = self.client.delete(url, format = "json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
         response_data = json.loads(response.content.decode('utf-8'))
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response_data["message"], "Delete order failed.")
         
-    def test_delete_order_without_number(self):
-        _ = self.__import_order()
-        
-        invalid_payload = {
-            "number": ""
-        }
-        
-        response: HttpResponse = self.client.delete(self.url, data = invalid_payload, format = "json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
-
-        
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        
     def test_delete_order_without_token(self):
         order_number = self.__import_order()
-        valid_payload = {
-            "number": order_number
-        }
-        
-        response = self.client.post(self.url, data = valid_payload, format="json")
+        url = reverse(self.url_name, kwargs={'number': order_number})
+
+
+        response = self.client.post(url,format="json")
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         

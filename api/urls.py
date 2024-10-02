@@ -6,7 +6,7 @@ from api.adapter.controller.product.product_views import create_product, get_all
 urlpatterns = [
     path('import-order/', import_order, name = "import_order"),
     path('orders/', get_all_orders, name = "get_all_orders"),
-    path('order/', delete_order, name = "delete_order"),
+    path('order/<str:number>/', delete_order, name = "delete_order"),
     path('product/', create_product, name = "create_product"),
     path('products/', get_all_products, name = "get_all_products")
 ]

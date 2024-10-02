@@ -63,24 +63,16 @@ def get_all_orders(request):
         
 @token_required
 @api_view(['DELETE'])
-def delete_order(request):
-    serializer = DeleteOrderSerializer(data = request.data)
-    if serializer.is_valid():
-        validated_data = serializer.validated_data
-
-        order_number = validated_data["number"]
-        
-        order_repo = OrderRepository()
-        output: DeleteOrderOutput = DeleteOrder(repo = order_repo).execute(input = DeleteOrderInput(number = order_number))
-        
-        if output.result:
-            return Response({
-                "message": "Delete order successfully."
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({
-                "error": str(output.exception),
-                "message": "Delete order failed."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def delete_order(request, number):    
+    order_repo = OrderRepository()
+    output: DeleteOrderOutput = DeleteOrder(repo = order_repo).execute(input = DeleteOrderInput(number = number))
+    
+    if output.result:
+        return Response({
+            "message": "Delete order successfully."
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            "error": str(output.exception),
+            "message": "Delete order failed."
+        }, status=status.HTTP_400_BAD_REQUEST)
