@@ -9,7 +9,7 @@ class Order(models.Model):
 
 class OrderProduct(models.Model):
     order_number = models.ForeignKey(Order, on_delete = models.CASCADE)
-    product_number = models.ForeignKey(Product, on_delete = models.CASCADE)
+    product_number = models.ForeignKey(Product, on_delete = models.PROTECT)
     quantity = models.PositiveIntegerField()
 
     class Meta:
