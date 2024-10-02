@@ -5,17 +5,20 @@ from rest_framework import status
 from api.adapter.repository.order.order_repository import OrderRepository
 from api.adapter.repository.product.product_repository import ProductRepository
 from api.adapter.controller.decoractor import token_required
-from api.adapter.controller.order.order_serializer import OrderSerializer
+from api.adapter.controller.order.order_serializer import CreateOrderSerializer, DeleteOrderSerializer
 from api.use_case.order.import_order.import_order import ImportOrder
 from api.use_case.order.import_order.import_order_input import ImportOrderInput
 from api.use_case.order.import_order.import_order_output import ImportOrderOutput
 from api.use_case.order.get_all_orders.get_all_orders import GetAllOrders
 from api.use_case.order.get_all_orders.get_all_orders_output import GetAllOrdersOutput
+from api.use_case.order.delete_order.delete_order import DeleteOrder
+from api.use_case.order.delete_order.delete_order_input import DeleteOrderInput
+from api.use_case.order.delete_order.delete_order_output import DeleteOrderOutput
 
 @token_required
 @api_view(['POST'])
 def import_order(request):
-    serializer = OrderSerializer(data = request.data)
+    serializer = CreateOrderSerializer(data = request.data)
     if serializer.is_valid():
         validated_data = serializer.validated_data
 
@@ -31,12 +34,12 @@ def import_order(request):
         if output.result:
             return Response({
                 "number": output.number,
-                "message": "Order created successfully."
+                "message": "Create order successfully."
             }, status=status.HTTP_201_CREATED)
         else:
             return Response({
                 "error": str(output.exception),
-                "message": "Order creation failed."
+                "message": "Create order failed."
             }, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -57,3 +60,27 @@ def get_all_orders(request):
             'error': str(output.exception),
             'message': 'Fetch orders failed.'
         }, status=status.HTTP_400_BAD_REQUEST)
+        
+@token_required
+@api_view(['DELETE'])
+def delete_order(request):
+    serializer = DeleteOrderSerializer(data = request.data)
+    if serializer.is_valid():
+        validated_data = serializer.validated_data
+
+        order_number = validated_data["number"]
+        
+        order_repo = OrderRepository()
+        output: DeleteOrderOutput = DeleteOrder(repo = order_repo).execute(input = DeleteOrderInput(number = order_number))
+        
+        if output.result:
+            return Response({
+                "message": "Delete order successfully."
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                "error": str(output.exception),
+                "message": "Delete order failed."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

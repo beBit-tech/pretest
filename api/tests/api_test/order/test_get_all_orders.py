@@ -84,3 +84,8 @@ class TestGetAllOrders(APITestCase):
         self.assertEqual(response_data["orders"][1]["total_price"], total_price_2)
         self.assertEqual(response_data["orders"][1]["order_lines"][0]["number"], self.product_number_2)
         self.assertEqual(response_data["orders"][1]["order_lines"][0]["quantity"], quantity_2)
+        
+    def test_get_all_orders_without_token(self):
+        response: HttpResponse = self.client.get(self.url, format = "json")
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

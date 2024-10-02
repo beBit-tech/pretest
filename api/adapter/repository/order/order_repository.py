@@ -1,9 +1,11 @@
 from typing import List
+from django.core.exceptions import ObjectDoesNotExist
+
 from api.adapter.repository.order.order_model import Order, OrderProduct
 from api.use_case.repository.repository_interface import RepositoryInterface
 
 class OrderRepository(RepositoryInterface):
-    def add(self, data_map: dict):
+    def add(self, data_map: dict) -> None:
         try:
             order = Order.objects.create(
                 number = data_map["number"],
@@ -49,3 +51,11 @@ class OrderRepository(RepositoryInterface):
             return result
         except Exception as e:
             raise Exception(f"Failed to retrieve orders: {str(e)}")
+        
+    def delete(self, number: str) -> None:
+        try:
+            Order.objects.get(number=number).delete()
+        except ObjectDoesNotExist:
+            raise Exception(f"Order with number {number} does not exist.")
+        except Exception as e:
+            raise Exception(f"Failed to delete order: {str(e)}")

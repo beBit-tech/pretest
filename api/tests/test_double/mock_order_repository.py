@@ -15,3 +15,12 @@ class MockOrderRepository(RepositoryInterface):
     def get_all(self) -> List[dict]:
         return self.orders
     
+    def delete(self, number: str) -> None:
+        found = False
+        self.orders = [
+            order for order in self.orders
+            if not (order.get("number") == number and not found and (found := True))
+        ]
+
+        if not found:
+            raise Exception(f"Order number: {number} not exist.")

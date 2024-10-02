@@ -56,7 +56,7 @@ class ImportOrderTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("number", response_data)
-        self.assertEqual(response_data["message"], "Order created successfully.")
+        self.assertEqual(response_data["message"], "Create order successfully.")
         self.assertIsNotNone(order)
 
         order_product_1 = OrderProduct.objects.filter(order_number = order_number).first()
@@ -132,4 +132,5 @@ class ImportOrderTest(APITestCase):
             ]
         }
         response = self.client.post(self.url, data = invalid_payload, format="json", HTTP_AUTHORIZATION = self.ACCEPTED_TOKEN)
+        
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
