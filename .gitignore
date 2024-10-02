@@ -1,3 +1,6 @@
 __pycache__/
 data/
 .DS_Store
+pyproject.toml
+poetry.lock
+.venv

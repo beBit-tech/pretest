@@ -1,7 +1,12 @@
 from django.contrib import admin
 from django.urls import path
-from api.views import import_order
+from api.adapter.controller.order.order_views import import_order, get_all_orders, delete_order
+from api.adapter.controller.product.product_views import create_product, get_all_products
 
 urlpatterns = [
-    path('import-order/', import_order)
+    path('import-order/', import_order, name = "import_order"),
+    path('orders/', get_all_orders, name = "get_all_orders"),
+    path('order/<str:number>/', delete_order, name = "delete_order"),
+    path('product/', create_product, name = "create_product"),
+    path('products/', get_all_products, name = "get_all_products")
 ]
