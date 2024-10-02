@@ -27,16 +27,6 @@ class ProductRepository(RepositoryInterface):
         except Exception as e:
             raise Exception(f"Failed to retrieve products: {str(e)}")
 
-    # def get_by_number(self, number: str) -> dict:
-    #     try:
-    #         product = Product.objects.get(number=number)
-    #         return {
-    #             "number": product.number,
-    #             "price": product.price,
-    #         }
-    #     except Product.DoesNotExist:
-    #         raise Exception(f"Product with number {number} not found")
-
     def check_products_exist(self, product_numbers: list) -> set:
         existing_products = Product.objects.filter(number__in = product_numbers)
         existing_numbers = set(existing_products.values_list("number", flat = True))
