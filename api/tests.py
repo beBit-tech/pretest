@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -14,7 +14,10 @@ class OrderTestCase(APITestCase):
             "total_price": "99.99",
         }
 
+        time_before_request = datetime.now(timezone.utc)
         response = self.client.post("/api/import-order/", data, format="json")
+        time_after_request = datetime.now(timezone.utc)
+
         order_data = response.json()["order"]
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(order_data["order_number"], 12345)
@@ -22,7 +25,11 @@ class OrderTestCase(APITestCase):
 
         created_time = order_data["created_time"]
         self.assertIsNotNone(created_time)
-        datetime.strptime(created_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+        created_time = datetime.strptime(created_time, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+            tzinfo=timezone.utc
+        )
+        self.assertGreaterEqual(created_time, time_before_request)
+        self.assertLessEqual(created_time, time_after_request)
 
     def test_invalid_token(self) -> None:
         """Test with invalid access token"""
