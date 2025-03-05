@@ -1,9 +1,12 @@
+from typing import Any
+
+from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from .models import Product
+from .models import OrderItem, Product
 from .serializers import OrderSerializer, ProductSerializer
 from .tokens import validate_token
 
@@ -74,3 +77,50 @@ def product_retrieve_update_delete(request: Request, pk: int) -> Response:
     return Response(
         {"error": "invalid method"}, status=status.HTTP_405_METHOD_NOT_ALLOWED
     )
+
+
+@api_view(["POST"])
+@transaction.atomic
+def place_order(request: Request) -> Response:
+    data = request.data
+    items: list[dict[str, Any]] = data.get("items", [])
+    if not items:
+        return Response(
+            {"error": "Empty item list"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    total_price = 0
+    order_items = []
+
+    try:
+        for item in items:
+            product = Product.objects.get(pk=item.get("id"))
+            total_price += product.price * item.get("quantity")
+            order_items.append(
+                {
+                    "product": product,
+                    "quantity": item.get("quantity"),
+                    "unit_price": product.price,
+                }
+            )
+    except Product.DoesNotExist:
+        return Response(
+            {"error": f"Product with ID {item.get('id')} not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    serializer = OrderSerializer(
+        data={"order_number": data.get("order_number"), "total_price": total_price}
+    )
+    if serializer.is_valid():
+        order = serializer.save()
+        for order_item in order_items:
+            OrderItem.objects.create(
+                order=order,
+                product=order_item.get("product"),
+                quantity=order_item.get("quantity"),
+                unit_price=order_item.get("unit_price"),
+            )
+        return Response({"order": serializer.data}, status=status.HTTP_201_CREATED)
+
+    return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
