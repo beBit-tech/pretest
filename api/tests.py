@@ -90,3 +90,97 @@ class OrderTestCase(APITestCase):
         response = self.client.post("/api/import-order/", data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("order_number", response.json()["error"])
+
+
+class ProductTestCase(APITestCase):
+    def setUp(self) -> None:
+        self.test_product = "Test Product"
+        self.test_description = "Test Description"
+        self.test_price = "29.99"
+
+        self.product_data = {
+            "name": self.test_product,
+            "description": self.test_description,
+            "price": self.test_price,
+        }
+
+    def test_create_product_successfully(self) -> None:
+        time_before_request = datetime.now(timezone.utc)
+        response = self.client.post("/api/products/", self.product_data, format="json")
+        time_after_request = datetime.now(timezone.utc)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        product_data = response.json()["product"]
+
+        self.assertEqual(product_data["name"], self.test_product)
+        self.assertEqual(product_data["description"], self.test_description)
+        self.assertEqual(product_data["price"], self.test_price)
+
+        created_time = datetime.strptime(
+            product_data["created_time"], "%Y-%m-%dT%H:%M:%S.%fZ"
+        ).replace(tzinfo=timezone.utc)
+
+        self.assertGreaterEqual(created_time, time_before_request)
+        self.assertLessEqual(created_time, time_after_request)
+
+    def test_get_products_list(self) -> None:
+        self.client.post("/api/products/", self.product_data, format="json")
+        response = self.client.get("/api/products/", format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        products = response.json()["products"]
+        self.assertEqual(len(products), 1)
+        self.assertEqual(products[0]["name"], self.test_product)
+        self.assertEqual(products[0]["description"], self.test_description)
+        self.assertEqual(products[0]["price"], self.test_price)
+
+    def test_get_product_detail(self) -> None:
+        create_response = self.client.post(
+            "/api/products/", self.product_data, format="json"
+        )
+        product_id = create_response.json()["product"]["id"]
+        response = self.client.get(f"/api/products/{product_id}/", format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        product_data = response.json()["product"]
+        self.assertEqual(product_data["name"], self.test_product)
+        self.assertEqual(product_data["description"], self.test_description)
+        self.assertEqual(product_data["price"], self.test_price)
+
+    def test_update_product(self) -> None:
+        create_response = self.client.post(
+            "/api/products/", self.product_data, format="json"
+        )
+        product_id = create_response.json()["product"]["id"]
+
+        update_data = {"name": "Updated Product", "price": "39.99"}
+        response = self.client.put(
+            f"/api/products/{product_id}/", update_data, format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        product_data = response.json()["product"]
+        self.assertEqual(product_data["name"], "Updated Product")
+        self.assertEqual(product_data["price"], "39.99")
+
+    def test_delete_product(self) -> None:
+        create_response = self.client.post(
+            "/api/products/", self.product_data, format="json"
+        )
+        product_id = create_response.json()["product"]["id"]
+
+        response = self.client.delete(f"/api/products/{product_id}/", format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Verify product is deleted
+        response = self.client.get(f"/api/products/{product_id}/", format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_missing_required_fields(self) -> None:
+        data = {"description": "Test Description"}
+        response = self.client.post("/api/products/", data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        errors = response.json()["error"]
+        self.assertIn("name", errors)
+        self.assertIn("price", errors)
