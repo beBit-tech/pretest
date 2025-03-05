@@ -5,5 +5,5 @@ from api.views import import_order, product_list_create, product_retrieve_update
 urlpatterns = [
     path("import-order/", import_order),
     path("products/", product_list_create),
-    path("products/<int:pk>", product_retrieve_update_delete),
+    path("products/<int:pk>/", product_retrieve_update_delete),
 ]

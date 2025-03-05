@@ -31,7 +31,7 @@ def product_list_create(request: Request) -> Response:
     if request.method == "GET":
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
-        return Response({"product": serializer.data})
+        return Response({"products": serializer.data})
     elif request.method == "POST":
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
@@ -63,9 +63,7 @@ def product_retrieve_update_delete(request: Request, pk: int) -> Response:
         serializer = ProductSerializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(
-                {"product": serializer.data}, status=status.HTTP_201_CREATED
-            )
+            return Response({"product": serializer.data}, status=status.HTTP_200_OK)
         return Response(
             {"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
         )
