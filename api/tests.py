@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from .models import Order, OrderItem, Product
 
 
 # Create your tests here.
@@ -184,3 +187,70 @@ class ProductTestCase(APITestCase):
         errors = response.json()["error"]
         self.assertIn("name", errors)
         self.assertIn("price", errors)
+
+
+class PlaceOrderViewTests(APITestCase):
+    def setUp(self) -> None:
+        self.product1 = Product.objects.create(
+            name="Test Product 1", description="Description 1", price=Decimal("10.99")
+        )
+        self.product2 = Product.objects.create(
+            name="Test Product 2", description="Description 2", price=Decimal("20.50")
+        )
+
+        self.payload = {
+            "order_number": 12345,
+            "items": [
+                {"id": self.product1.id, "quantity": 2},
+                {"id": self.product2.id, "quantity": 1},
+            ],
+        }
+
+    def test_place_order_success(self) -> None:
+        response = self.client.post("/api/place-order/", self.payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(OrderItem.objects.count(), 2)
+
+        order = Order.objects.first()
+        self.assertEqual(order.total_price, Decimal("42.48"))
+        self.assertEqual(order.order_number, 12345)
+
+    def test_place_order_empty_items(self) -> None:
+        payload = {"order_number": 12345, "items": []}
+        response = self.client.post("/api/place-order/", payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"], "Empty item list")
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_place_order_invalid_product(self) -> None:
+        payload = {
+            "order_number": 12345,
+            "items": [
+                {
+                    "id": 99999,
+                    "quantity": 1,
+                }
+            ],
+        }
+        response = self.client.post("/api/place-order/", payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_place_order_missing_order_number(self) -> None:
+        payload = {"items": [{"id": self.product1.id, "quantity": 1}]}
+        response = self.client.post("/api/place-order/", payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_place_order_duplicate_order_number(self) -> None:
+        self.client.post("/api/place-order/", self.payload, format="json")
+
+        response = self.client.post("/api/place-order/", self.payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Order.objects.count(), 1)  # Only first order should exist
