@@ -16,19 +16,6 @@ from .tokens import validate_token
 ACCEPTED_TOKEN = "omni_pretest_token"
 
 
-@api_view(["POST"])
-@validate_token
-def import_order(request: Request) -> Response:
-    data = request.data
-
-    serializer = OrderSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"order": serializer.data}, status=status.HTTP_201_CREATED)
-
-    return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
 @api_view(["GET", "POST"])
 def product_list_create(request: Request) -> Response:
     if request.method == "GET":
@@ -80,8 +67,9 @@ def product_retrieve_update_delete(request: Request, pk: int) -> Response:
 
 
 @api_view(["POST"])
+@validate_token
 @transaction.atomic
-def place_order(request: Request) -> Response:
+def import_order(request: Request) -> Response:
     data = request.data
     items: list[dict[str, Any]] = data.get("items", [])
     if not items:
