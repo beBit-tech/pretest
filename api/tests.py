@@ -28,6 +28,11 @@ class OrderTestCase(APITestCase):
             "total_price": 30.00,
             "products": [999, 1000]
         }
+        self.wrong_total_price_payload = {
+            "token": "omni_pretest_token",
+            "total_price": 25.00,
+            "products": [self.product1.id, self.product2.id]
+        }
         self.import_order_url = reverse('import_order')
 
     def test_create_order_with_valid_payload(self):
@@ -47,4 +52,8 @@ class OrderTestCase(APITestCase):
 
     def test_create_order_with_invalid_product_ids(self):
         response = self.client.post(self.import_order_url, self.invalid_product_ids_payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_create_order_with_wrong_total_price(self):
+        response = self.client.post(self.import_order_url, self.wrong_total_price_payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
