@@ -26,7 +26,10 @@ class OrderTestCase(APITestCase):
         self.invalid_product_ids_payload = {
             "token": "omni_pretest_token",
             "total_price": 30.00,
-            "product_ids": ["999", "1000"]
+            "product_ids": [
+                "f5dd47a4-4dda-47a5-b243-c42563daa198",
+                "f5dd47a4-4dda-47a5-b243-c42563daa199"
+            ]
         }
         self.wrong_total_price_payload = {
             "token": "omni_pretest_token",
