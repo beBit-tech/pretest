@@ -3,5 +3,5 @@ from django.urls import path
 from api.views import import_order
 
 urlpatterns = [
-    path('import-order/', import_order)
+    path("import_order/", import_order)
 ]
