@@ -12,12 +12,12 @@ class OrderTestCase(APITestCase):
         self.valid_payload = {
             "token": "omni_pretest_token",
             "total_price": 30.00,
-            "products": [self.product1.id, self.product2.id]
+            "product_ids": [self.product1.product_id, self.product2.product_id]
         }
         self.invalid_token_payload = {
             "token": "invalid_token",
             "total_price": 30.00,
-            "products": [self.product1.id, self.product2.id]
+            "product_ids": [self.product1.product_id, self.product2.product_id]
         }
         self.missing_fields_payload = {
             "token": "omni_pretest_token",
@@ -26,12 +26,12 @@ class OrderTestCase(APITestCase):
         self.invalid_product_ids_payload = {
             "token": "omni_pretest_token",
             "total_price": 30.00,
-            "products": [999, 1000]
+            "product_ids": ["999", "1000"]
         }
         self.wrong_total_price_payload = {
             "token": "omni_pretest_token",
             "total_price": 25.00,
-            "products": [self.product1.id, self.product2.id]
+            "product_ids": [self.product1.product_id, self.product2.product_id]
         }
         self.import_order_url = reverse('import_order')
 

@@ -1,4 +1,6 @@
+import uuid
 from django.db import models
+from django.core.exceptions import ValidationError
 
 
 # Create your models here.
@@ -33,8 +35,30 @@ class Order(models.Model):
 
     @classmethod
     def create_order(cls, total_price, product_ids):
-        order_number = cls.generate_order_number()
-        products = Product.objects.filter(id__in=product_ids)
-        order = cls.objects.create(order_number=order_number, total_price=total_price)
+        """
+        Create an order with the given total price and product IDs.
+        Raises a ValidationError if any of the product IDs are invalid or 
+        the total price does not match the sum of the product prices.
+
+        :param total_price: The total price of the order
+        :param product_ids: A list of product IDs
+        :return: The created order
+        """
+        products = []
+        invalid_product_ids = []
+        for product_id in product_ids:
+            try:
+                products.append(Product.objects.get(product_id=product_id))
+            except Product.DoesNotExist:
+                invalid_product_ids.append(product_id)
+
+        if invalid_product_ids:
+            raise ValidationError('Invalid product IDs: {}'.format(', '.join(invalid_product_ids)))
+        
+        if sum(product.price for product in products) != total_price:
+            raise ValidationError('Total price does not match the sum of product prices')
+
+        order = cls.objects.create(total_price=total_price)
         order.products.set(products)
+        order.save()
         return order

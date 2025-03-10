@@ -12,21 +12,13 @@ ACCEPTED_TOKEN = ('omni_pretest_token')
 @check_access_token
 def import_order(request):
     total_price = request.data.get('total_price')
-    product_ids = request.data.get('products')
+    product_ids = request.data.get('product_ids')
 
     if not total_price or not product_ids:
         return HttpResponseBadRequest('Missing fields')
 
     try:
         order = Order.create_order(total_price=total_price, product_ids=product_ids)
-
-        if order.products.count() != len(product_ids):
-            return HttpResponseBadRequest('Invalid product IDs')
-        
-        if sum(product.price for product in order.products.all()) != total_price:
-            return HttpResponseBadRequest('Total price does not match the sum of product prices')
-
-        order.save()
         return JsonResponse({'message': 'Order created successfully', 'order_number': order.order_number}, status=status.HTTP_201_CREATED)
     except ValidationError as e:
         return HttpResponseBadRequest(str(e))
