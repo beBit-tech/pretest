@@ -1,4 +1,5 @@
 import json
+from functools import wraps
 
 from api.models import Order
 from django.http import HttpResponseBadRequest, JsonResponse
@@ -17,13 +18,20 @@ class OrderData(BaseModel):
     total_price: float
 
 
+def validate_token(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        token = request.headers.get("Authorization")
+        if token != f"Bearer {ACCEPTED_TOKEN}":
+            return HttpResponseBadRequest("Invalid token")
+        return func(request, *args, **kwargs)
+    return wrapper
+
+
 @api_view(['POST'])
+@validate_token
 def import_order(request):
     # Add your code here
-    token = request.headers.get("Authorization")
-    if token != f"Bearer {ACCEPTED_TOKEN}":
-        return HttpResponseBadRequest("Invalid token")
-
     try:
         data = OrderData.model_validate(request.data.dict())
     except ValidationError as e:
