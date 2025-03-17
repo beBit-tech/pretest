@@ -17,6 +17,38 @@ from rest_framework.response import Response
 @validate_token
 def import_order(request):
     # Add your code here
+    """
+    Import an order and create associated order items.
+
+    This endpoint processes an incoming request to import an order, including:
+    - Validating the provided order request data.
+    - Checking if the order already exists.
+    - Verifying the existence of all products in the order.
+    - Ensuring there is sufficient stock for the products.
+    - Creating the order and associated order items if validation passes.
+
+    Arguments:
+        request: The HTTP request containing order data in the body.
+            {
+                "order_number": "ORD-123",
+                "total_price": 199.99,
+                "customer_name": "John Doe",
+                "products": [
+                    {
+                        "product_number": "PROD-001",
+                        "quantity": 2
+                    },
+                    ...
+                ]
+            }
+
+    Returns:
+        JsonResponse: A response indicating success or failure.
+            - 200 OK: Order created successfully
+            - 400 Bad Request: Invalid data or duplicate order number
+            - 404 Not Found: One or more products don't exist
+    """
+
     try:
         data = OrderData.model_validate(request.data)
     except ValidationError as e:
@@ -72,6 +104,38 @@ def import_order(request):
 @api_view(['POST'])
 @validate_token
 def create_or_update_product(request):
+    """
+    Create a new product or update an existing one.
+
+    This endpoint handles both creating a new product or updating an existing product:
+    - If the product with the specified product_number exists, it updates the product's details.
+    - If the product does not exist, a new product is created.
+    - The order status of affected orders is also updated based on product availability in stock.
+      Orders that are not fully available are marked as 'PENDING', otherwise, they are marked as 'PROCESSING'.
+
+    The request body should contain product details, including:
+    - product_number (string): Unique identifier for the product.
+    - product_name (string): Name of the product.
+    - price (float): Price of the product.
+    - stock_quantity (integer): Available stock quantity of the product.
+    - description (string): Description of the product.
+
+    Arguments:
+        request: The HTTP request containing product data in the body.
+            {
+                "product_number": "PROD-001",
+                "product_name": "Sample Product",
+                "price": 49.99,
+                "stock_quantity": 100,
+                "description": "Product description"
+            }
+
+    Returns:
+        JsonResponse: A response indicating or failure.
+            - 200 OK: Product created or updated successfully.
+            - 400 Bad Request: Invalid data format.
+    """
+
     try:
         data = ProductData.model_validate(request.data)
     except ValidationError as e:
@@ -123,6 +187,27 @@ def create_or_update_product(request):
 @api_view(['DELETE'])
 @validate_token
 def delete_product(request):
+    """
+    Delete a product and cancel related orders.
+
+    This endpoint deletes a product identified by `product_number`. Before deletion:
+    - It retrieves all orders associated with the product.
+    - Updates the status of related orders to `CANCELLED`.
+    - Deletes the product from the database.
+
+    Arguments:
+        request: The HTTP request containing the product_number in the body.
+            {
+                "product_number": "PROD-001"
+            }
+
+    Returns:
+        JsonResponse: A response indicating success or failure
+            - 200 OK: Product deleted successfully.
+            - 400 Bad Request: Invalid data format.
+            - 404 Not Found: Product not found.
+    """
+
     try:
         data = ProductDeleteData.model_validate(request.data)
     except ValidationError as e:
@@ -150,6 +235,30 @@ def delete_product(request):
 @api_view(['GET'])
 @validate_token
 def get_order_details(request, order_number):
+    """
+    Retrieve detailed information for a specific order.
+
+    This endpoint fetches the details of a specific order based on the provided `order_number`.
+    If the order does not exist, it returns a 404 error.
+
+    URL Path Parameter:
+        order_number (str): The unique identifier of the order.
+
+    Returns:
+        JsonResponse:
+            - 200 OK: Get order details successfully.
+                - order_number
+                - total_price
+                - customer_name
+                - status
+                - updated_time
+                - items: A list of items in the order, each containing:
+                    * product_number
+                    * product_name
+                    * quantity
+            - 404 Not Found: If the order does not exist, returns an error message.
+    """
+
     try:
         order = Order.objects.get(order_number=order_number)
     except Order.DoesNotExist:
