@@ -1,53 +1,16 @@
 import json
-from functools import wraps
-from typing import List, Optional
 
+from api.dto import OrderData, ProductData, ProductDeleteData, Status
 from api.models import Order, OrderItem, Product
+from api.utils import validate_token
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 # Create your views here.
-
-
-ACCEPTED_TOKEN = ('omni_pretest_token')
-
-
-class OrderItemData(BaseModel):
-    product_number: str
-    quantity: int
-
-
-class OrderData(BaseModel):
-    order_number: str
-    total_price: float
-    customer_name: str
-    products: List[OrderItemData] = Field(min_items=1)
-
-
-class ProductData(BaseModel):
-    product_number: str
-    product_name: str
-    price: float
-    stock_quantity: int
-    description: Optional[str] = ""
-
-
-class ProductDeleteData(BaseModel):
-    product_number: str
-
-
-def validate_token(func):
-    @wraps(func)
-    def wrapper(request, *args, **kwargs):
-        token = request.headers.get("Authorization")
-        if token != f"Bearer {ACCEPTED_TOKEN}":
-            return HttpResponseBadRequest("Invalid token")
-        return func(request, *args, **kwargs)
-    return wrapper
 
 
 @api_view(['POST'])
@@ -59,23 +22,39 @@ def import_order(request):
     except ValidationError as e:
         return HttpResponseBadRequest(f"Invalid request data: {e}")
 
+    if Order.objects.filter(order_number=data.order_number).exists():
+        return JsonResponse(
+            data={"message": f"Order {data.order_number} already exists"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    product_numbers = [p.product_number for p in data.products]
+    product_dict = {p.product_number: p for p in Product.objects.filter(product_number__in=product_numbers)}
+
+    missing_products = set(product_numbers) - set(product_dict.keys())
+    if missing_products:
+        return JsonResponse(
+            data={"message": "Products do not exist"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    insufficient_products = [
+        p.product_number for p in data.products
+        if p.quantity > product_dict[p.product_number].stock_quantity
+    ]
+
+    order_status = Status.PENDING if insufficient_products else Status.PROCESSING
+
     order = Order(
         order_number=data.order_number,
         total_price=data.total_price,
-        customer_name=data.customer_name
+        customer_name=data.customer_name,
+        status=order_status
     )
     order.save()
 
-    product_numbers = [p.product_number for p in data.products]
-    products_dict = {p.product_number: p for p in Product.objects.filter(product_number__in=product_numbers)}
-
     for ordered_product in data.products:
-        product = products_dict.get(ordered_product.product_number)
-        if not product:
-            return JsonResponse(
-                data={"message": f"Product {ordered_product.product_number} does not exist"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        product = product_dict.get(ordered_product.product_number)
 
         orderitem = OrderItem(
             order=order,
@@ -106,6 +85,20 @@ def create_or_update_product(request):
         product.stock_quantity = data.stock_quantity
         product.description = data.description
         product.save()
+
+        affected_orders = Order.objects.filter(ordered_items__product=product).distinct()
+
+        for order in affected_orders:
+            if order.status in (Status.DELIVERED, Status.CANCELLED):
+                continue
+
+            all_items_available = all(
+                item.quantity <= item.product.stock_quantity
+                for item in order.ordered_items.all()
+            )
+
+            order.status = Status.PROCESSING if all_items_available else Status.PENDING
+            order.save()
 
         return JsonResponse(
             {"message": "Product updated successfully", "product_id": product.id},
@@ -142,6 +135,10 @@ def delete_product(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    related_order_items = OrderItem.objects.filter(product=product)
+    related_orders = Order.objects.filter(ordered_items__in=related_order_items).distinct()
+    related_orders.update(status=Status.CANCELLED)
+
     product.delete()
 
     return JsonResponse(
@@ -174,7 +171,7 @@ def get_order_details(request, order_number):
         "total_price": float(order.total_price),
         "customer_name": order.customer_name,
         "status": order.status,
-        "created_time": order.created_time,
+        "updated_time": order.updated_time,
         "items": items
     }
 

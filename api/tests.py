@@ -1,7 +1,8 @@
 import json
 
+from api.dto import Status
 from api.models import Order, OrderItem, Product
-from api.views import ACCEPTED_TOKEN
+from api.utils import ACCEPTED_TOKEN
 from django.test import TestCase
 from rest_framework.test import APIClient, APITestCase
 
@@ -54,6 +55,7 @@ class OrderTestCase(APITestCase):
         order = Order.objects.get(order_number="ORDER-1")
         self.assertEqual(float(order.total_price), 99.99)
         self.assertEqual(order.customer_name, "elaina")
+        self.assertEqual(order.status, Status.PROCESSING)
 
         order_item = OrderItem.objects.get(order=order)
         self.assertEqual(order_item.product.product_number, "PROD-1")
@@ -73,8 +75,9 @@ class OrderTestCase(APITestCase):
         )
 
         # Then
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content.decode('utf-8'), 'Invalid token')
+        self.assertEqual(response.status_code, 401)
+        response_data = response.json()
+        self.assertIn("Invalid token", response_data['message'])
 
     test_missing_fields_data = [
         ({}),
@@ -146,6 +149,30 @@ class OrderTestCase(APITestCase):
             self.assertEqual(response.status_code, 400)
             self.assertIn('Invalid request data', response.content.decode('utf-8'))
 
+    def test_import_existing_order(self):
+        '''
+        測試導入已存在的訂單
+        '''
+
+        # Given
+        Order.objects.create(
+            order_number="ORDER-1",
+            total_price=100.00,
+            customer_name="elaina"
+        )
+
+        # When
+        response = self.client.post(
+            self.import_url,
+            data=json.dumps(self.data),
+            HTTP_AUTHORIZATION=self.valid_token,
+            content_type='application/json'
+        )
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('already exists', response.content.decode('utf-8'))
+
     def test_import_order_product_not_found(self):
         '''
         測試當訂單中包含不存在的產品
@@ -175,7 +202,48 @@ class OrderTestCase(APITestCase):
         # Then
         self.assertEqual(response.status_code, 404)
         response_data = response.json()
-        self.assertIn("Product NON_EXISTING_PROD does not exist", response_data['message'])
+        self.assertIn("Products do not exist", response_data['message'])
+
+    def test_import_order_with_insufficient_product(self):
+        '''
+        測試當訂單中包含庫存不足的產品
+        '''
+
+        # Given
+        data = {
+            "order_number": "ORDER-1",
+            "total_price": 50.55,
+            "customer_name": "elaina",
+            "products": [
+                {
+                    "product_number": "PROD-1",
+                    "quantity": 20
+                }
+            ]
+        }
+
+        # When
+        response = self.client.post(
+            self.import_url,
+            data=json.dumps(data),
+            HTTP_AUTHORIZATION=self.valid_token,
+            content_type='application/json'
+        )
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        response_data = response.json()
+        self.assertIn("successfully", response_data['message'])
+
+        self.assertTrue(Order.objects.filter(order_number="ORDER-1").exists())
+        order = Order.objects.get(order_number="ORDER-1")
+        self.assertEqual(float(order.total_price), 50.55)
+        self.assertEqual(order.customer_name, "elaina")
+        self.assertEqual(order.status, Status.PENDING)
+
+        order_item = OrderItem.objects.get(order=order)
+        self.assertEqual(order_item.product.product_number, "PROD-1")
+        self.assertEqual(order_item.quantity, 20)
 
     def test_get_order_details_success(self):
         '''
@@ -244,6 +312,12 @@ class ProductTestCase(APITestCase):
             price=20.00,
             stock_quantity=5
         )
+        self.order = Order.objects.create(
+            order_number="ORDER-0",
+            total_price=10.0,
+            customer_name="elaina",
+            status=Status.PROCESSING
+        )
         self.data = {
             "product_number": "PROD-1",
             "product_name": "test_product",
@@ -275,12 +349,62 @@ class ProductTestCase(APITestCase):
         self.assertEqual(float(product.price), 25.05)
         self.assertEqual(int(product.stock_quantity), 10)
 
-    def test_update_existing_product(self):
+    def test_update_existing_product_from_processing_to_pending(self):
         '''
-        測試更新已存在的商品
+        測試更新已存在的商品 (當訂單原本為 PROCESSING，更新商品庫存後，因為庫存不足而變為 PENDING)
         '''
 
         # Given
+        OrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            quantity=2
+        )
+
+        updated_data = {
+            "product_number": "PROD-0",
+            "product_name": "updated_product",
+            "price": 30.00,
+            "stock_quantity": 1,
+            "description": "The old product is updated"
+        }
+
+        self.order.status = Status.PROCESSING
+        self.order.save()
+
+        # When
+        response = self.client.post(
+            self.create_or_update_url,
+            data=json.dumps(updated_data),
+            HTTP_AUTHORIZATION=self.valid_token,
+            content_type='application/json'
+        )
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        response_data = response.json()
+        self.assertIn("Product updated successfully", response_data['message'])
+
+        product = Product.objects.get(product_number="PROD-0")
+        self.assertEqual(product.product_name, "updated_product")
+        self.assertEqual(float(product.price), 30.00)
+        self.assertEqual(int(product.stock_quantity), 1)
+
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Status.PENDING)
+
+    def test_update_existing_product_from_pending_to_processing(self):
+        '''
+        測試更新已存在的商品 (當訂單原本為 PENDING，更新商品庫存後，因為庫存充足而變為 PROCESSING)
+        '''
+
+        # Given
+        OrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            quantity=2
+        )
+
         updated_data = {
             "product_number": "PROD-0",
             "product_name": "updated_product",
@@ -288,6 +412,9 @@ class ProductTestCase(APITestCase):
             "stock_quantity": 15,
             "description": "The old product is updated"
         }
+
+        self.order.status = Status.PENDING
+        self.order.save()
 
         # When
         response = self.client.post(
@@ -307,6 +434,9 @@ class ProductTestCase(APITestCase):
         self.assertEqual(float(product.price), 30.00)
         self.assertEqual(int(product.stock_quantity), 15)
 
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Status.PROCESSING)
+
     def test_create_or_update_product_invalid_token(self):
         '''
         測試 access token 錯誤
@@ -321,8 +451,9 @@ class ProductTestCase(APITestCase):
         )
 
         # Then
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content.decode('utf-8'), 'Invalid token')
+        self.assertEqual(response.status_code, 401)
+        response_data = response.json()
+        self.assertIn("Invalid token", response_data['message'])
 
     test_missing_fields_data = [
         ({}),
@@ -376,10 +507,17 @@ class ProductTestCase(APITestCase):
 
     def test_delete_product_success(self):
         '''
-        測試成功刪除商品
+        測試成功刪除商品，並確保訂單狀態被更新為 CANCELLED
         '''
 
-        # Given, When
+        # Given
+        OrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            quantity=1
+        )
+
+        # When
         response = self.client.delete(
             self.delete_url,
             data=json.dumps({"product_number": "PROD-0"}),
@@ -392,6 +530,9 @@ class ProductTestCase(APITestCase):
         response_data = response.json()
         self.assertIn("successfully", response_data['message'])
         self.assertFalse(Product.objects.filter(product_number="PROD-0").exists())
+
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Status.CANCELLED)
 
     def test_delete_product_invalid_token(self):
         '''
@@ -407,8 +548,9 @@ class ProductTestCase(APITestCase):
         )
 
         # Then
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content.decode('utf-8'), 'Invalid token')
+        self.assertEqual(response.status_code, 401)
+        response_data = response.json()
+        self.assertIn("Invalid token", response_data['message'])
 
     def test_delete_product_missing_fields(self):
         '''
