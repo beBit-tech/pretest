@@ -21,6 +21,7 @@ class OrderTestCase(APITestCase):
             price=25.05,
             stock_quantity=10
         )
+
         self.data = {
             "order_number": "ORDER-1",
             "total_price": 99.99,
@@ -80,55 +81,43 @@ class OrderTestCase(APITestCase):
         self.assertIn("Invalid token", response_data['message'])
 
     test_missing_fields_data = [
-        ({}),
-        (
-            {
-                "total_price": 99.99,
-                "customer_name": "elaina",
-                "products": [
-                    {
-                        "product_number": "PROD-1",
-                        "quantity": 2
-                    }
-                ]
-            }
-        ),
-        (
-            {
-                "order_number": "ORDER-1",
-                "customer_name": "elaina",
-                "products": [
-                    {
-                        "product_number": "PROD-1",
-                        "quantity": 2
-                    }
-                ]
-            }
-        ),
-        (
-            (
+        {},
+        {
+            "total_price": 99.99,
+            "customer_name": "elaina",
+            "products": [
                 {
-                    "order_number": "ORDER-1",
-                    "total_price": 99.99,
-                    "products": [
-                        {
-                            "product_number": "PROD-1",
-                            "quantity": 2
-                        }
-                    ]
+                    "product_number": "PROD-1",
+                    "quantity": 2
                 }
-            ),
-        ),
-        (
-            (
+            ]
+        },
+        {
+            "order_number": "ORDER-1",
+            "customer_name": "elaina",
+            "products": [
                 {
-                    "order_number": "ORDER-1",
-                    "total_price": 99.99,
-                    "customer_name": "elaina",
-                    "products": []
+                    "product_number": "PROD-1",
+                    "quantity": 2
                 }
-            ),
-        )
+            ]
+        },
+        {
+            "order_number": "ORDER-1",
+            "total_price": 99.99,
+            "products": [
+                {
+                    "product_number": "PROD-1",
+                    "quantity": 2
+                }
+            ]
+        },
+        {
+            "order_number": "ORDER-1",
+            "total_price": 99.99,
+            "customer_name": "elaina",
+            "products": []
+        },
     ]
 
     def test_import_order_missing_fields(self):
@@ -260,7 +249,7 @@ class OrderTestCase(APITestCase):
         OrderItem.objects.create(
             order=order,
             product=self.product,
-            quantity=2
+            quantity=20
         )
 
         # When
@@ -276,12 +265,12 @@ class OrderTestCase(APITestCase):
         self.assertEqual(response_data["order_number"], "ORDER-0")
         self.assertEqual(float(response_data["total_price"]), 100.00)
         self.assertEqual(response_data["customer_name"], "elaina")
-        self.assertEqual(response_data["status"], "pending")
+        self.assertEqual(response_data["status"], Status.PENDING)
 
         item = response_data["items"][0]
         self.assertEqual(item["product_number"], "PROD-1")
         self.assertEqual(item["product_name"], "test_product")
-        self.assertEqual(item["quantity"], 2)
+        self.assertEqual(item["quantity"], 20)
 
     def test_get_order_details_order_not_found(self):
         '''
@@ -318,6 +307,7 @@ class ProductTestCase(APITestCase):
             customer_name="elaina",
             status=Status.PROCESSING
         )
+
         self.data = {
             "product_number": "PROD-1",
             "product_name": "test_product",
@@ -348,6 +338,38 @@ class ProductTestCase(APITestCase):
         self.assertEqual(product.product_name, "test_product")
         self.assertEqual(float(product.price), 25.05)
         self.assertEqual(int(product.stock_quantity), 10)
+
+    def test_update_existing_product(self):
+        '''
+        測試更新已存在的商品
+        '''
+
+        # Given
+        updated_data = {
+            "product_number": "PROD-0",
+            "product_name": "updated_product",
+            "price": 30.00,
+            "stock_quantity": 15,
+            "description": "The old product is updated"
+        }
+
+        # When
+        response = self.client.post(
+            self.create_or_update_url,
+            data=json.dumps(updated_data),
+            HTTP_AUTHORIZATION=self.valid_token,
+            content_type='application/json'
+        )
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        response_data = response.json()
+        self.assertIn("Product updated successfully", response_data['message'])
+
+        product = Product.objects.get(product_number="PROD-0")
+        self.assertEqual(product.product_name, "updated_product")
+        self.assertEqual(float(product.price), 30.00)
+        self.assertEqual(int(product.stock_quantity), 15)
 
     def test_update_existing_product_from_processing_to_pending(self):
         '''
@@ -436,6 +458,53 @@ class ProductTestCase(APITestCase):
 
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, Status.PROCESSING)
+
+    test_status = [Status.DELIVERED, Status.CANCELLED]
+
+    def test_update_product_while_order_is_delivered_or_cancelled(self):
+        '''
+        測試更新已存在的商品 (當訂單狀態為 DELIVERED 或 CANCELLED 時，更新商品不會影響訂單狀態)
+        '''
+
+        for status in self.test_status:
+            # Given
+            OrderItem.objects.create(
+                order=self.order,
+                product=self.product,
+                quantity=2
+            )
+
+            updated_data = {
+                "product_number": "PROD-0",
+                "product_name": "updated_product",
+                "price": 30.00,
+                "stock_quantity": 1,
+                "description": "The old product is updated"
+            }
+
+            self.order.status = status
+            self.order.save()
+
+            # When
+            response = self.client.post(
+                self.create_or_update_url,
+                data=json.dumps(updated_data),
+                HTTP_AUTHORIZATION=self.valid_token,
+                content_type='application/json'
+            )
+
+            # Then
+            self.assertEqual(response.status_code, 200)
+            response_data = response.json()
+            self.assertIn("Product updated successfully", response_data['message'])
+
+            product = Product.objects.get(product_number="PROD-0")
+            self.assertEqual(product.product_name, "updated_product")
+            self.assertEqual(float(product.price), 30.00)
+            self.assertEqual(int(product.stock_quantity), 1)
+
+            self.order.refresh_from_db()
+            self.assertEqual(self.order.status, status)
 
     def test_create_or_update_product_invalid_token(self):
         '''

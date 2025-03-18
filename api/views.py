@@ -1,16 +1,16 @@
 import json
 import logging
+from typing import Any, Dict, List, Set
 
 from api.dto import OrderData, ProductData, ProductDeleteData, Status
 from api.models import Order, OrderItem, Product
 from api.utils import validate_token
-from django.http import HttpResponseBadRequest, JsonResponse, HttpRequest
+from django.http import HttpRequest, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from pydantic import ValidationError
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from typing import Dict, Any, List, Set
 
 # Create your views here.
 
@@ -112,10 +112,9 @@ def import_order(request: HttpRequest) -> JsonResponse:
     except Exception as e:
         logger.error(f"Failed to import order for order {data.order_number}: {e}")
         return JsonResponse(
-            {"message": "Failed to import order"}, 
+            {"message": "Failed to import order"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
 
     return JsonResponse(
         data={"message": "Order imported successfully", "order_id": order.id},
@@ -135,7 +134,7 @@ def create_or_update_product(request: HttpRequest) -> JsonResponse:
     - The order status of affected orders is also updated based on product availability in stock.
       Orders that are not fully available are marked as 'PENDING', otherwise, they are marked as 'PROCESSING'.
     - If the product does not exist, a new product is created.
-      
+
     Arguments:
         request: The HTTP request containing product data in the body.
             {
@@ -190,7 +189,7 @@ def create_or_update_product(request: HttpRequest) -> JsonResponse:
         except Exception as e:
             logger.error(f"Failed to update product {product.product_number}: {e}")
             return JsonResponse(
-                {"message": "Failed to update product"}, 
+                {"message": "Failed to update product"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -214,7 +213,7 @@ def create_or_update_product(request: HttpRequest) -> JsonResponse:
         except Exception as e:
             logger.error(f"Failed to create product {data.product_number}: {e}")
             return JsonResponse(
-                {"message": "Failed to create product"}, 
+                {"message": "Failed to create product"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -277,7 +276,7 @@ def delete_product(request: HttpRequest) -> JsonResponse:
     except Exception as e:
         logger.error(f"Failed to delete product {data.product_number}: {e}")
         return JsonResponse(
-            {"message": "Failed to delete product"}, 
+            {"message": "Failed to delete product"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -289,7 +288,7 @@ def delete_product(request: HttpRequest) -> JsonResponse:
 
 @api_view(['GET'])
 @validate_token
-def get_order_details(order_number: str) -> JsonResponse:
+def get_order_details(request, order_number: str) -> JsonResponse:
     """
     Retrieve detailed information for a specific order.
 
@@ -343,5 +342,5 @@ def get_order_details(order_number: str) -> JsonResponse:
     }
 
     logger.info(f"Order {order_number} details retrieved successfully")
-    
+
     return JsonResponse(order_data, status=status.HTTP_200_OK)
