@@ -281,6 +281,12 @@
      "error": "Username is required"
    }
    ```
+6. 產品庫存不足 (HTTP 400)：
+   ```json
+   {
+     "error": "Insufficient stock for product PDT002."
+   }
+   ```
 
 ---
 
