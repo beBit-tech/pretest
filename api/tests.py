@@ -1,3 +1,5 @@
+# api/tests.py
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -93,6 +95,7 @@ class ImportOrderAPITest(APITestCase):
         """
         data = {
             "access_token": self.valid_token,
+            "username": "test_user",
             "products": [
                 {"product_id": "PDT001", "quantity": 2},  # 100 x 2
                 {"product_id": "PDT002", "quantity": 1},  # 200 x 1
@@ -119,6 +122,22 @@ class ImportOrderAPITest(APITestCase):
         product = Product.objects.get(product_id="PDT002")
         self.assertEqual(product.stock, 0)
 
+    def test_import_order_missing_username(self):
+        """
+        當 username 缺失時，預期回傳 400
+        """
+        data = {
+            "access_token": self.valid_token,
+            "products": [
+                {"product_id": "PDT001", "quantity": 1}
+            ]
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(OrderProduct.objects.count(), 0)
+
     def test_import_order_insufficient_stock(self):
         """
         測試庫存不足的情境。
@@ -126,6 +145,7 @@ class ImportOrderAPITest(APITestCase):
         """
         data = {
             "access_token": self.valid_token,
+            "username": "test_user",
             "products": [
                 {"product_id": "PDT001", "quantity": 6},  # 庫存只有 5
             ]
@@ -144,6 +164,7 @@ class ImportOrderAPITest(APITestCase):
         """
         data = {
             "access_token": self.valid_token,
+            "username": "test_user",
             "products": []
         }
         response = self.client.post(self.url, data, format="json")
@@ -159,6 +180,7 @@ class ImportOrderAPITest(APITestCase):
         """
         data = {
             "access_token": self.valid_token,
+            "username": "test_user",
             "products": [
                 {"product_id": "", "quantity": 2},  # product_id 為空字串
             ]
@@ -178,6 +200,7 @@ class ImportOrderAPITest(APITestCase):
         """
         data = {
             "access_token": self.valid_token,
+            "username": "test_user",
             "products": [
                 {"product_id": "PDT9999", "quantity": 1}
             ]
@@ -196,6 +219,7 @@ class ImportOrderAPITest(APITestCase):
         """
         data = {
             "access_token": "wrong_token",
+            "username": "test_user",
             "products": [
                 {"product_id": "PDT001", "quantity": 1}
             ]

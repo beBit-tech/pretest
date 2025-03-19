@@ -14,6 +14,10 @@ def import_order(request, data):
     """
     接收 JSON 格式的訂單資訊，並自動計算 total_price、建立 Order 與 OrderProduct。
     """
+    username = data.get("username")
+    if not username:
+        return Response({"error": "Username is required"}, status=400)
+    
     products = data.get("products")
     if not products:
         return Response({"error": "No products provided"}, status=400)
@@ -22,7 +26,11 @@ def import_order(request, data):
     order_number = generate_order_number()
 
     # 2. 建立一筆 Order，先讓 total_price = 0
-    order = Order.objects.create(order_number=order_number, total_price=0)
+    order = Order.objects.create(
+        order_number=order_number, 
+        total_price=0,
+        username=username
+    )
 
     total_price_acc = 0
 

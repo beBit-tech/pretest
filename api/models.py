@@ -9,13 +9,22 @@ class Order(models.Model):
     - 訂單號碼（唯一）
     - 總價格
     - 創建時間
+    - 使用者名稱
+    - 訂單狀態
     """
+    STATUS_CHOICES = [
+        ('CREATED', 'Created'),  # 目前僅保留一種狀態
+    ]
+
     order_number = models.CharField(max_length=20, unique=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     created_time = models.DateTimeField(auto_now_add=True)
+    username = models.CharField(max_length=50)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES,
+                              default='CREATED')
 
     def __str__(self):
-        return f"Order {self.order_number} - ${self.total_price}"
+        return f"Order {self.order_number} - {self.username} - ${self.total_price} - {self.status}"
 
 
 class Product(models.Model):
@@ -61,7 +70,7 @@ class OrderProduct(models.Model):
 class OrderNumberSequence(models.Model):
     """
     儲存每日的訂單流水號計數器。
-    e.g. date = "20250317", sequence= 1
+    e.g. date = "20250317", sequence = 1
     """
     date = models.CharField(max_length=8, unique=True)
     sequence = models.IntegerField(default=1)

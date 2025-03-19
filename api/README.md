@@ -42,10 +42,13 @@
 | order_number| `CharField(max_length=20, unique=True)` | 訂單編號，格式例如 `ORD2025031700001`       |
 | total_price | `DecimalField(max_digits=10, decimal_places=2)` | 訂單總金額                       |
 | created_time| `DateTimeField(auto_now_add=True)` | 建立時間，建立時自動寫入          |
-
+| username    | `CharField(max_length=50)`   | 下單人的使用者名稱（必填）           |
+| status      | `CharField(max_length=20, default='CREATED')` | 訂單狀態，預設為 "CREATED" |
 - **說明**：  
   - `order_number` 的生成邏輯由 `generate_order_number()` 處理，確保每天編號都從 1 開始累加。
   - `total_price` 會在 `import_order` 函式執行後，將訂單中所有產品金額加總後寫入。
+  - `username` 表示建立該訂單的用戶，需於下單時傳入，否則 API 會回傳錯誤。
+  - `status` 表示訂單狀態，目前預設固定為 `'CREATED'`，未來可擴充其他狀態。
 
 ---
 
@@ -216,6 +219,7 @@
 ```json
 {
     "access_token": "omni_pretest_token",
+    "username": "test_user",
     "products": [
         { "product_id": "PDT001", "quantity": 2 },
         { "product_id": "PDT002", "quantity": 1 }
@@ -226,6 +230,7 @@
 |   欄位名稱   |    說明                             | 必填 |
 |-------------|--------------------------------------|-----|
 | access_token| 用於 API 驗證，固定為 "omni_pretest_token" | 是   |
+| username    | 下單的使用者名稱                      | 是  |
 | products    | 產品清單 Array                      | 是   |
 | product_id  | 產品編號                            | 是   |
 | quantity    | 此產品數量                           | 是   |
@@ -268,6 +273,12 @@
    ```json
    {
      "error": "Product PDT999 does not exist."
+   }
+   ```
+5. 缺少 'username' (HTTP 400)：
+   ```json
+   {
+     "error": "Username is required"
    }
    ```
 
