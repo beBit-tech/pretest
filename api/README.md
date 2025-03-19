@@ -337,7 +337,6 @@
 ---
 
 ## Token 驗證機制
-- 預設可用的 Token：`"omni_pretest_token"`
 - 驗證邏輯由 `@validate_access_token` decorator 實現：
   1. 先解析 JSON (失敗則回傳 400)
   2. 取得 `access_token`
