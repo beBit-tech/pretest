@@ -3,7 +3,7 @@ from rest_framework import status
 
 from django.utils import timezone
 
-from .views import ACCEPTED_TOKEN
+from .util import ACCEPTED_TOKEN
 from .models import Product, Order, OrderItem
 import uuid
 from datetime import timedelta
@@ -39,13 +39,12 @@ class OrderTestCase(APITestCase):
 
     def test_import_order_success(self):
         data = {
-            "access_token": self.token,
             "order_items": [{
                 "product_title": self.product.title,
                 "quantity": 2
             }]
         }
-        response = self.client.post(self.url_import_order, data, format="json")
+        response = self.client.post(self.url_import_order, data, format="json", headers={"Authorization": f"{self.token}"})
         self.assertIn("order_number", response.data)
         self.assertEqual(response.data["status"], "Pending")
         self.assertEqual(response.data["total_price"], 100.0)    
@@ -56,46 +55,41 @@ class OrderTestCase(APITestCase):
 
     def test_import_order_invalid_token(self):
         data = {
-            "access_token": "invalid_token",
             "order_items": []
         }
-        response = self.client.post(self.url_import_order, data, format="json")
+        response = self.client.post(self.url_import_order, data, format="json", headers={"Authorization": "invalid_token"})
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data["error"], "access_token must be valid")
 
     def test_import_order_empty_order_items(self):
         data = {
-            "access_token": self.token,
             "order_items": []
         }
-        response = self.client.post(self.url_import_order, data, format="json")
+        response = self.client.post(self.url_import_order, data, format="json", headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
     
     def test_import_order_insufficient_inventory(self):
         data = {
-            "access_token": self.token,
             "order_items": [{
                 "product_title": self.product.title,
                 "quantity": 101
             }]
         }
-        response = self.client.post(self.url_import_order, data, format="json")
+        response = self.client.post(self.url_import_order, data, format="json", headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_import_order_product_not_found(self):
         data = {
-            "access_token": self.token,
             "order_items": [{
                 "product_title": "Invalid Product",
                 "quantity": 2
             }]
         }
-        response = self.client.post(self.url_import_order, data, format="json")
+        response = self.client.post(self.url_import_order, data, format="json", headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_import_order_duplicate_product(self):
         data = {
-            "access_token": self.token,
             "order_items": [{
                 "product_title": self.product.title,
                 "quantity": 2
@@ -104,35 +98,35 @@ class OrderTestCase(APITestCase):
                 "quantity": 3
             },]
         }
-        response = self.client.post(self.url_import_order, data, format="json")
+        response = self.client.post(self.url_import_order, data, format="json", headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.data["error"], "Product with title already exists in the order")
         
     def test_list_orders(self):
-        response = self.client.get(self.url_list_orders)
+        response = self.client.get(self.url_list_orders, headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data["results"]), 1)
 
     def test_get_order_by_number_success(self):
-        response = self.client.get(self.url_get_order_by_number)
+        response = self.client.get(self.url_get_order_by_number, headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["order_number"], str(self.order.order_number))
 
     def test_get_order_by_number_not_found(self):
-        response = self.client.get(f"/api/get-order-by-number/{uuid.uuid4()}/")
+        response = self.client.get(f"/api/get-order-by-number/{uuid.uuid4()}/", headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_order_by_product_success(self):
-        response = self.client.get(self.url_get_order_by_product)
+        response = self.client.get(self.url_get_order_by_product, headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data["results"]), 1)
 
     def test_get_order_by_product_not_found(self):
-        response = self.client.get(f"/api/get-order-by-product/{uuid.uuid4()}/")
+        response = self.client.get(f"/api/get-order-by-product/{uuid.uuid4()}/", headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_order_success(self):
-        response = self.client.delete(self.url_delete_order)
+        response = self.client.delete(self.url_delete_order, headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, Order.STATUS_FAILED)
@@ -140,13 +134,13 @@ class OrderTestCase(APITestCase):
     def test_delete_order_already_failed(self):
         self.order.status = Order.STATUS_FAILED
         self.order.save()
-        response = self.client.delete(self.url_delete_order)
+        response = self.client.delete(self.url_delete_order, headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete_order_after_one_day(self):
         self.order.created_at = timezone.now() - timedelta(days=2)
         self.order.save()
-        response = self.client.delete(self.url_delete_order)
+        response = self.client.delete(self.url_delete_order, headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
@@ -169,11 +163,53 @@ class ProductTestCase(APITestCase):
             price_at_purchase=50.0,
             product_title="Test Product"
         )
+        self.token = ACCEPTED_TOKEN
+        self.url_create_product = "/api/create-product/"
+        self.url_update_product = f"/api/update-product/{self.product.product_number}/"
         self.url_delete_product = f"/api/delete-product/{self.product.product_number}/"
+
+    def test_create_product_success(self):
+        data = {
+            "title": "New Product",
+            "price": 100.0,
+            "inventory": 50
+        }
+        response = self.client.post(self.url_create_product, data, format="json", headers={"Authorization": f"{self.token}"})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["title"], "New Product")
+        self.assertEqual(response.data["price"], 100.0)
+        self.assertEqual(response.data["inventory"], 50)
+
+    def test_create_product_invalid_price(self):
+        data = {
+            "price": -1,
+            "inventory": 50
+        }
+        response = self.client.post(self.url_create_product, data, format="json", headers={"Authorization": f"{self.token}"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_product_success(self):
+        data = {
+            "price": 150.0, 
+            "inventory": 200
+        }
+        response = self.client.patch(self.url_update_product, data, format="json", headers={"Authorization": f"{self.token}"})  
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.price, 150.0)
+        self.assertEqual(self.product.inventory, 200)
+
+    def test_update_product_failed(self):
+        data = {
+            "price": -1, 
+            "inventory": -1
+        }
+        response = self.client.patch(self.url_update_product, data, format="json", headers={"Authorization": f"{self.token}"})  
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # test product foreign key is set to null
     def test_delete_product_success(self):
-        response = self.client.delete(self.url_delete_product)
+        response = self.client.delete(self.url_delete_product, headers={"Authorization": f"{self.token}"})
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.order_item.refresh_from_db()
         self.assertIsNone(self.order_item.product)

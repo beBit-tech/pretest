@@ -30,7 +30,8 @@ class Order(models.Model):
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=STATUS_PENDING)
     
 class OrderItem(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    # related_name is used to access OrderItem objects from Product model
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name="product_items")
     # related_name is used to access OrderItem objects from Order model
     order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name="order_items")
     quantity = models.PositiveIntegerField()

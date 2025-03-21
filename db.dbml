@@ -7,18 +7,18 @@ Project Omni_Pretest {
 
 Table api_product as P {
     product_number uuid [pk, default: `uuid_generate_v4()`]
-    title varchar [unique]
+    title varchar [unique, not null]
     description text 
     price float [not null, note: 'greater equal than 0']
     inventory int [not null, note: 'greater equal than 0']
-    last_update timestamptz [not null, default: `now()`]
+    last_update datetime [not null, default: `now()`, note: 'change when product is updated']
 }
 
 Table api_order as O {
     order_number uuid [pk, default: `uuid_generate_v4()`]
     total_price float [not null, note: 'greater equal than 0']
     status varchar [not null, default: 'Pending', note: 'Pending, Complete, Failed']
-    created_at timestamptz [not null, default: `now()`]
+    created_at datetime [not null, default: `now()`]
 }
 
 Table api_order_item {
@@ -26,7 +26,7 @@ Table api_order_item {
     order_id bigint [ref: > O.order_number, not null]
     product_id uuid [ref: > P.product_number, not null]
     quantity int [not null, note: 'greater equal than 0']
-    price float [not null, note: 'greater equal than 0']
+    price_at_purchase float [not null, note: 'greater equal than 0']
     product_title varchar [not null]
 
     Indexes {
