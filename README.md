@@ -57,4 +57,5 @@
 * After receiving this pretest, you have to finish it in 7 days
 * Create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) and name it with your name ( 王小明 - 面試 )
 
-* Feel free to let us know if there is any question: shelby.xiao@omniscientai.com
+* Feel free to let us know if there is any question: shelby.xiao@omniscientai.com\
+---
