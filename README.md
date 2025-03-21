@@ -61,6 +61,12 @@
 ---
 ## API Endpoints
 
+> [!NOTE]
+> 所有 UUID 參數需要以有效的 UUID 格式傳遞，否則將回傳404錯誤訊息。
+
+> [!IMPORTANT]
+> 所有requests header必須加上`Authorization: <access_token>`的形式。
+
 ### Products API
 
 - **POST** `/api/create-product/`: 創建新的產品。
@@ -113,10 +119,7 @@
 
     - Response: 返回更新後訂單狀態
         1. `200`: (Pending -> Failed)。
-        2. `400`: (Complete or Failed -> Failed)
-
-> [!NOTE]
-> 所有 UUID 參數需要以有效的 UUID 格式傳遞，否則將回傳404錯誤訊息。
+        2. `400`: (Complete or Failed or 訂單建立時間超過一天 -> Failed)
 ---
 ## DB Details
 - [dbdocs](https://dbdocs.io/robertmadhead0919/Omni_Pretest?schema=public&view=relationships&table=api_product)
