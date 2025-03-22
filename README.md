@@ -124,3 +124,11 @@
 ## DB Details
 - [dbdocs](https://dbdocs.io/robertmadhead0919/Omni_Pretest?schema=public&view=relationships&table=api_product)
 
+## Test Coverage
+```bash
+# run in container
+coverage run manage.py test && coverage report
+```
+- more details in **test_coverage.png**
+
+

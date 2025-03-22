@@ -11,7 +11,8 @@ services:
       - POSTGRES_NAME=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    command: -p 7432
+    command: 
+      -p 7432
 
   web:
     build:

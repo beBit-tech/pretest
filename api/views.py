@@ -11,7 +11,7 @@ from django.db import IntegrityError
 
 from .serializers import OrderSerializer, ProductSerializer
 from .models import Product, Order
-from .util import token_validation
+from .token import token_validation
 from datetime import timedelta
 
 # Create your views here.

@@ -48,7 +48,7 @@ class OrderSerializer(serializers.Serializer):
         - order_items: [OrderItem Model, OrderItem Model, ...]
     """
     order_items = OrderItemSerializer(many=True,required=True)
-    order_number = serializers.CharField(read_only=True)
+    order_number = serializers.UUIDField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     total_price = serializers.FloatField(read_only=True)
     status = serializers.CharField(read_only=True, source="get_status_display")

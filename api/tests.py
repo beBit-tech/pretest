@@ -3,7 +3,7 @@ from rest_framework import status
 
 from django.utils import timezone
 
-from .util import ACCEPTED_TOKEN
+from .token import ACCEPTED_TOKEN
 from .models import Product, Order, OrderItem
 import uuid
 from datetime import timedelta
