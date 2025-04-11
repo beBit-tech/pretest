@@ -27,13 +27,13 @@ class OrderTestCase(APITestCase):
     # Test success cases
     def test_success_import_order(self):
         data = {
-            'token': self.valid_token,
             'customer_uid': self.customer_uid,
             'products': [
                 {"uid":self.product1_uid,"count":2},
                 {"uid":self.product2_uid,"count":3}
             ]
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         order = Order.objects.first()
         self.assertEqual(response.status_code, 200)
@@ -45,13 +45,13 @@ class OrderTestCase(APITestCase):
     # Test error cases
     def test_invalid_token(self):
         data = {
-            'token': 'wrong_token',
             'customer_uid': self.customer_uid,
             'products': [
                 {"uid":self.product1_uid,"count":2},
                 {"uid":self.product2_uid,"count":3}
             ]
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer wrong_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Order.objects.count(), 0)
@@ -72,12 +72,12 @@ class OrderTestCase(APITestCase):
 
     def test_missing_customer_uid(self):
         data = {
-            'token': self.valid_token,
             'products': [
                 {"uid":self.product1_uid,"count":2},
                 {"uid":self.product2_uid,"count":3}
             ]
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Order.objects.count(), 0)
@@ -85,10 +85,10 @@ class OrderTestCase(APITestCase):
 
     def test_empty_product(self):
         data = {
-            'token': self.valid_token,
             'customer_uid': self.customer_uid,
             'products': []
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Order.objects.count(), 0)
@@ -96,13 +96,13 @@ class OrderTestCase(APITestCase):
 
     def test_customer_not_exist(self):
         data = {
-            'token': self.valid_token,
             'customer_uid': 'fake_customer',
             'products': [
                 {"uid":self.product1_uid,"count":2},
                 {"uid":self.product2_uid,"count":3}
             ]
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Order.objects.count(), 0)
@@ -110,12 +110,12 @@ class OrderTestCase(APITestCase):
 
     def test_negative_product(self):
         data = {
-            'token': self.valid_token,
             'customer_uid': self.customer_uid,
             'products': [
                 {"uid":self.product2_uid,"count":-5}
             ]
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Order.objects.count(), 0)
@@ -123,12 +123,12 @@ class OrderTestCase(APITestCase):
 
     def test_product_not_found(self):
         data = {
-            'token': self.valid_token,
             'customer_uid': self.customer_uid,
             'products': [
                 {"uid":'fake_product',"count":3}
             ]
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Order.objects.count(), 0)
@@ -143,21 +143,42 @@ class ProductTestCase(APITestCase):
     # Test success cases
     def test_success_add_product(self):
         data = {
-            'token': self.valid_token,
             'name': 'laptop',
             'price': 100.00
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Product.objects.count(), 1)
         self.assertEqual(Product.objects.first().name, 'laptop')
 
     # Test error cases
-    def test_empty_product_name(self):
+    def test_invalid_token(self):
         data = {
-            'token': self.valid_token,
+            'name': 'laptop',
             'price': 100.00
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer wrong_token')
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Product.objects.count(), 0)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['INVALID_TOKEN'])
+
+    def test_missing_token(self):
+        data = {
+            'name': 'laptop',
+            'price': 100.00
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Product.objects.count(), 0)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['TOKEN_EMPTY'])
+
+    def test_empty_product_name(self):
+        data = {
+            'price': 100.00
+        }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Product.objects.count(), 0)
@@ -165,10 +186,10 @@ class ProductTestCase(APITestCase):
 
     def test_invalid_product_price1(self):
         data = {
-            'token': self.valid_token,
             'name': 'laptop',
             'price': -100
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Product.objects.count(), 0)
@@ -176,9 +197,9 @@ class ProductTestCase(APITestCase):
 
     def test_invalid_product_price2(self):
         data = {
-            'token': self.valid_token,
             'name': 'laptop'
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Product.objects.count(), 0)
@@ -193,20 +214,270 @@ class CustomerTestCase(APITestCase):
     # Test success cases
     def test_success_add_product(self):
         data = {
-            'token': self.valid_token,
             'name': 'Paul'
         }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Customer.objects.count(), 1)
         self.assertEqual(Customer.objects.first().name, 'Paul')
 
     # Test error cases
-    def test_empty_customer_name(self):
+    def test_invalid_token(self):
         data = {
-            'token': self.valid_token
+            'name': 'Paul'
+        }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer wrong_token')
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Customer.objects.count(), 0)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['INVALID_TOKEN'])
+
+    def test_missing_token(self):
+        data = {
+            'name': 'Paul'
         }
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Customer.objects.count(), 0)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['TOKEN_EMPTY'])
+
+    def test_empty_customer_name(self):
+        data = {}
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Customer.objects.count(), 0)
         self.assertEqual(response.data['error_code'], ERROR_CODES['CUSTOMER_NAME_EMPTY'])
+
+class GetOrderTestCase(APITestCase):
+    # Add your testcase here
+    def setUp(self):
+        self.customer = Customer.objects.create(name="Alice")
+        self.product1 = Product.objects.create(name="Laptop", price=1000)
+        self.product2 = Product.objects.create(name="Mouse", price=200)
+        self.order = Order.objects.create(
+            customer=self.customer,
+            total_price=2600
+        )
+        self.op1 = OrderProduct.objects.create(
+            order=self.order,
+            product=self.product1,
+            count=2
+        )
+        self.op2 = OrderProduct.objects.create(
+            order=self.order,
+            product=self.product2,
+            count=3
+        )
+        self.url = reverse('get_order_detail', args=[self.order.order_number])
+
+    # Test success cases
+    def test_success_add_product(self):
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=f'Bearer omni_pretest_token'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['order_number'], self.order.order_number)
+        self.assertEqual(response.data['customer_uid'], self.customer.uid)
+        self.assertEqual(float(response.data['total_price']), float(self.order.total_price))
+        self.assertEqual(len(response.data['products']), 2)
+
+    # Test error cases
+    def test_invalid_token(self):
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=f'Bearer wrong_token'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['INVALID_TOKEN'])
+
+    def test_missing_token(self):
+        response = self.client.get(
+            self.url
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['TOKEN_EMPTY'])
+
+    def test_order_not_exist(self):
+        wrong_url = reverse('get_order_detail', args=['fake_order'])
+        response = self.client.get(
+            wrong_url,
+            HTTP_AUTHORIZATION=f'Bearer omni_pretest_token'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['ORDER_NOT_EXIST'])
+
+class GetCustomerOrderTestCase(APITestCase):
+    # Add your testcase here
+    def setUp(self):
+        self.customer = Customer.objects.create(name="Alice")
+        self.product1 = Product.objects.create(name="Laptop", price=1000)
+        self.product2 = Product.objects.create(name="Mouse", price=200)
+        self.order1 = Order.objects.create(
+            customer=self.customer,
+            total_price=2600
+        )
+        self.op1 = OrderProduct.objects.create(
+            order=self.order1,
+            product=self.product1,
+            count=2
+        )
+        self.op2 = OrderProduct.objects.create(
+            order=self.order1,
+            product=self.product2,
+            count=3
+        )
+
+        self.order2 = Order.objects.create(
+            customer=self.customer,
+            total_price=3800
+        )
+        self.op3 = OrderProduct.objects.create(
+            order=self.order2,
+            product=self.product1,
+            count=3
+        )
+        self.op4 = OrderProduct.objects.create(
+            order=self.order2,
+            product=self.product2,
+            count=4
+        )
+        self.url = reverse('get_customer_order', args=[self.customer.uid])
+
+    # Test success cases
+    def test_success_add_product(self):
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=f'Bearer omni_pretest_token'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['customer_name'], self.customer.name)
+        self.assertEqual(response.data['customer_uid'], self.customer.uid)
+        self.assertEqual(len(response.data['orders']), 2)
+
+    # Test error cases
+    def test_invalid_token(self):
+        response = self.client.get(
+            self.url,
+            HTTP_AUTHORIZATION=f'Bearer wrong_token'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['INVALID_TOKEN'])
+
+    def test_success_add_product(self):
+        response = self.client.get(
+            self.url
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['TOKEN_EMPTY'])
+
+    def test_order_not_exist(self):
+        wrong_url = reverse('get_customer_order', args=['fake_customer'])
+        response = self.client.get(
+            wrong_url,
+            HTTP_AUTHORIZATION=f'Bearer omni_pretest_token'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['CUSTOMER_NOT_EXIST'])
+
+class DeleteOrdersTestCase(APITestCase):
+    def setUp(self):
+        self.url = reverse('delete_order')
+        self.customer = Customer.objects.create(name="Alice")
+        self.product1 = Product.objects.create(name="Laptop", price=1000)
+        self.product2 = Product.objects.create(name="Mouse", price=200)
+        self.order1 = Order.objects.create(
+            customer=self.customer,
+            total_price=2600
+        )
+        self.op1 = OrderProduct.objects.create(
+            order=self.order1,
+            product=self.product1,
+            count=2
+        )
+        self.op2 = OrderProduct.objects.create(
+            order=self.order1,
+            product=self.product2,
+            count=3
+        )
+
+        self.order2 = Order.objects.create(
+            customer=self.customer,
+            total_price=3800
+        )
+        self.op3 = OrderProduct.objects.create(
+            order=self.order2,
+            product=self.product1,
+            count=3
+        )
+        self.op4 = OrderProduct.objects.create(
+            order=self.order2,
+            product=self.product2,
+            count=4
+        )
+
+    def test_successful_delete(self):
+        data = {
+            "order_numbers": [self.order1.order_number, self.order2.order_number]
+        }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['success'], 2)
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_invalid_token(self):
+        data = {
+            "order_numbers": [self.order1.order_number, self.order2.order_number]
+        }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer wrong_token')
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['INVALID_TOKEN'])
+
+    def test_empty_token(self):
+        data = {
+            "order_numbers": [self.order1.order_number, self.order2.order_number]
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['TOKEN_EMPTY'])
+
+    def test_invalid_order1(self):
+        data = {
+            "order_numbers": [self.order1.order_number, 'fake_order']
+        }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['success'], 1)
+        self.assertEqual(response.data['fail'], 1)
+        self.assertIn('fake_order', response.data['not_found'])
+
+    def test_invalid_order2(self):
+        data = {
+            "order_numbers": ['fake_order1', 'fake_order2']
+        }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['success'], 0)
+        self.assertEqual(response.data['fail'], 2)
+
+    def test_empty_order(self):
+        data = {}
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['INVALID_ORDER'])
+
+    def test_invalid_order_format(self):
+        data = {
+            "order_numbers": 'not_a_list'
+        }
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer omni_pretest_token')
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error_code'], ERROR_CODES['INVALID_ORDER'])

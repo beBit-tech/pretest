@@ -156,6 +156,7 @@ def add_customer(request):
         return Response({"error": str(e)}, status=500)
 
 @api_view(['GET'])
+@token_required
 def get_order_detail(request, order_number):
     '''
     Show detail of a order
@@ -198,6 +199,7 @@ def get_order_detail(request, order_number):
     return Response(data)
 
 @api_view(['GET'])
+@token_required
 def get_customer_orders(request, customer_uid):
     '''
     Return detail of all orders by a customer
@@ -249,7 +251,7 @@ def get_customer_orders(request, customer_uid):
 @api_view(['POST'])
 @token_required
 def delete_orders(request):
-    order_numbers = request.data.get('order_numbers')
+    order_numbers = request.data.get('order_numbers',[])
 
     # Check invalid order_number
     if not order_numbers or not isinstance(order_numbers, list):
