@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 import uuid
+import random
+import string
 
 # Create your models here.
 
@@ -44,7 +46,7 @@ class Customer(models.Model):
 
 class Order(models.Model):
     # Add your model here
-    order_number = models.CharField(max_length=30, unique=True) # 訂單編號
+    order_number = models.CharField(max_length=32, unique=True) # 訂單編號
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE) # 訂單建立者
     total_price = models.DecimalField(max_digits=10, decimal_places=2) # 訂單總價
     created_time = models.DateTimeField(default=timezone.now) # 訂單建立時間
@@ -52,7 +54,8 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if not self.order_number:
             timestamp = self.created_time.strftime('%Y%m%d%H%M%S')
-            self.order_number = f"ORD{timestamp}{self.customer.uid}"
+            random_code = ''.join(random.choices(string.digits, k=9))  # 9 碼數字
+            self.order_number = f"ORD{timestamp}{self.customer.uid}{random_code}"
         super().save(*args, **kwargs)
 
     def __str__(self):

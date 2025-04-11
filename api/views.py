@@ -191,7 +191,8 @@ def get_order_detail(request, order_number):
 
     data = {
         'order_number': order.order_number,
-        'customer': order.customer.uid,
+        'customer_uid': order.customer.uid,
+        'customer_name': order.customer.name,
         'total_price': float(order.total_price),
         'products': product_list,
         'created_time': order.created_time.isoformat()

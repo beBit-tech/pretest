@@ -4,6 +4,7 @@ from django.urls import reverse
 from .models import Order, Customer, Product, OrderProduct
 from rest_framework import status
 from .constants import ERROR_CODES
+import time
 
 # Create your tests here.
 class OrderTestCase(APITestCase):
@@ -273,7 +274,7 @@ class GetOrderTestCase(APITestCase):
         self.url = reverse('get_order_detail', args=[self.order.order_number])
 
     # Test success cases
-    def test_success_add_product(self):
+    def test_success_get_order(self):
         response = self.client.get(
             self.url,
             HTTP_AUTHORIZATION=f'Bearer omni_pretest_token'
@@ -330,6 +331,7 @@ class GetCustomerOrderTestCase(APITestCase):
             count=3
         )
 
+        time.sleep(0.001)
         self.order2 = Order.objects.create(
             customer=self.customer,
             total_price=3800
@@ -347,7 +349,7 @@ class GetCustomerOrderTestCase(APITestCase):
         self.url = reverse('get_customer_order', args=[self.customer.uid])
 
     # Test success cases
-    def test_success_add_product(self):
+    def test_success_get_customer_order(self):
         response = self.client.get(
             self.url,
             HTTP_AUTHORIZATION=f'Bearer omni_pretest_token'
@@ -402,7 +404,7 @@ class DeleteOrdersTestCase(APITestCase):
             product=self.product2,
             count=3
         )
-
+        time.sleep(0.001)
         self.order2 = Order.objects.create(
             customer=self.customer,
             total_price=3800
