@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 import json
 from django.utils.timezone import now
+from django.shortcuts import get_object_or_404
 from api.models import Order,Product,Customer,OrderProduct
 from django.utils.dateparse import parse_datetime
 import logging
@@ -153,3 +154,121 @@ def add_customer(request):
         return Response({"message": "Invalid JSON format",'error_code':ERROR_CODES['INVALID_JSON_FORMAT']}, status=400)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+@api_view(['GET'])
+def get_order_detail(request, order_number):
+    '''
+    Show detail of a order
+
+    Input:
+    order_number: str
+
+    Output:
+    order_number,
+    customer,
+    total_price,
+    products,
+    created_time
+    '''
+    try:
+        order = Order.objects.get(order_number=order_number)
+    except Order.DoesNotExist:
+        return Response(
+            {'error': 'Order not found', 'error_code': ERROR_CODES['ORDER_NOT_EXIST']},
+            status=400
+        )
+
+    products = OrderProduct.objects.filter(order=order).select_related('product')
+    product_list = [
+        {
+            'product_uid': op.product.uid,
+            'product_name': op.product.name,
+            'count': op.count,
+            'price': float(op.product.price)
+        } for op in products
+    ]
+
+    data = {
+        'order_number': order.order_number,
+        'customer': order.customer.uid,
+        'total_price': float(order.total_price),
+        'products': product_list,
+        'created_time': order.created_time.isoformat()
+    }
+    return Response(data)
+
+@api_view(['GET'])
+def get_customer_orders(request, customer_uid):
+    '''
+    Return detail of all orders by a customer
+
+    Input:
+    customer_uid: str
+
+    Output:
+    customer_uid
+    customer_name
+    orders
+    '''
+    try:
+        customer = Customer.objects.get(uid=customer_uid)
+    except Customer.DoesNotExist:
+        return Response(
+            {'message': 'Customer not found', 'error_code': ERROR_CODES['CUSTOMER_NOT_EXIST']},
+            status=400
+        )
+
+    orders = Order.objects.filter(customer=customer).order_by('-created_time')
+    order_list = []
+
+    for order in orders:
+        products = OrderProduct.objects.filter(order=order).select_related('product')
+        product_list = [
+            {
+                'product_uid': op.product.uid,
+                'product_name': op.product.name,
+                'count': op.count,
+                'price': float(op.product.price)
+            }
+            for op in products
+        ]
+
+        order_list.append({
+            'order_number': order.order_number,
+            'total_price': float(order.total_price),
+            'products': product_list,
+            'created_time': order.created_time.isoformat()
+        })
+
+    return Response({
+        'customer_uid': customer.uid,
+        'customer_name': customer.name,
+        'orders': order_list
+    })
+
+@api_view(['POST'])
+@token_required
+def delete_orders(request):
+    order_numbers = request.data.get('order_numbers')
+
+    # Check invalid order_number
+    if not order_numbers or not isinstance(order_numbers, list):
+        return Response({
+            "message": "Missing or invalid order_numbers list",
+            'error_code': ERROR_CODES['INVALID_ORDER']
+        }, status=400)
+
+    # Check existing Order
+    existing_orders = Order.objects.filter(order_number__in=order_numbers)
+    deleted_order_count = len(existing_orders)
+    existing_order_numbers = set(existing_orders.values_list('order_number', flat=True))
+    not_found = list(set(order_numbers) - existing_order_numbers)
+
+    deleted_count, _ = existing_orders.delete()
+
+    return Response({
+        "message": f"Order(s) deleted successfully",
+        "success": deleted_order_count,
+        "fail": len(not_found),
+        "not_found": not_found
+    }, status=200)
