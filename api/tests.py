@@ -3,7 +3,6 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from .models import Order
 import json
-from decimal import Decimal
 
 
 # Create your tests here.
