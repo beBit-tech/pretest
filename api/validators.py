@@ -1,6 +1,7 @@
 from decimal import Decimal
 from rest_framework import status
 from django.http import JsonResponse
+from api.models import Order
 
 class OrderValidator:
     """Order data validator class"""
@@ -13,6 +14,12 @@ class OrderValidator:
         if not order_number:
             return False, JsonResponse(
                 {'error': 'Order number cannot be empty'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if Order.objects.filter(order_number=order_number).exists():
+            return False, JsonResponse(
+                {'error': 'Order number already exists'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         

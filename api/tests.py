@@ -17,7 +17,7 @@ class OrderTestCase(APITestCase):
         self.response = self._call_import_order(self.data)
         
         self._response_status_code_should_be(status.HTTP_401_UNAUTHORIZED)
-        self._order_should_not_create()
+        self._order_count_should_be(0)
 
     def test_import_order_with_invalid_token_and_missing_data(self):
         self._given_token('invalid_token')
@@ -25,7 +25,7 @@ class OrderTestCase(APITestCase):
         self.response = self._call_import_order(self.data)
         
         self._response_status_code_should_be(status.HTTP_401_UNAUTHORIZED)
-        self._order_should_not_create()
+        self._order_count_should_be(0)
 
     def test_import_order_with_valid_token_and_missing_data(self):
         self._given_token(self.valid_token)
@@ -33,6 +33,7 @@ class OrderTestCase(APITestCase):
         self.response = self._call_import_order(self.data)
         
         self._response_status_code_should_be(status.HTTP_400_BAD_REQUEST)
+        self._order_count_should_be(0)
 
     def test_import_order_with_valid_token_and_valid_data(self):
         self._given_token(self.valid_token)
@@ -42,7 +43,7 @@ class OrderTestCase(APITestCase):
         self.response = self._call_import_order(self.data)
 
         self._response_status_code_should_be(status.HTTP_201_CREATED)
-        self._order_should_create()
+        self._order_count_should_be(1)
         self._order_number_should_be('ORD-001')
         self._total_price_should_be(100.00)
 
@@ -54,7 +55,7 @@ class OrderTestCase(APITestCase):
         self.response = self._call_import_order(self.data)
 
         self._response_status_code_should_be(status.HTTP_400_BAD_REQUEST)
-        self._order_should_not_create()
+        self._order_count_should_be(0)
 
     def test_import_order_with_valid_token_and_invalid_total_price_range(self):
         self._given_token(self.valid_token)
@@ -64,7 +65,22 @@ class OrderTestCase(APITestCase):
         self.response = self._call_import_order(self.data)
 
         self._response_status_code_should_be(status.HTTP_400_BAD_REQUEST)
-        self._order_should_not_create()
+        self._order_count_should_be(0)
+    
+    def test_import_order_with_duplicate_order_number(self):
+        self._given_token(self.valid_token)
+        self._given_order_number('ORD-001')
+        self._given_total_price(100.00)
+        self._call_import_order(self.data)
+        self._given_order_number('ORD-001')
+        self._given_total_price(200.00)
+
+        self.response = self._call_import_order(self.data)
+        
+        self._response_status_code_should_be(status.HTTP_400_BAD_REQUEST)
+        self._order_count_should_be(1)
+        self._order_number_should_be('ORD-001')
+        self._total_price_should_be(100.00)
 
 
     def _given_order_number(self, order_number):
@@ -87,6 +103,9 @@ class OrderTestCase(APITestCase):
 
     def _order_should_create(self):
         self.assertEqual(Order.objects.count(), 1)
+    
+    def _order_count_should_be(self, count):
+        self.assertEqual(Order.objects.count(), count)
 
     def _order_number_should_be(self, order_number):
         actual_order_number = Order.objects.first().order_number
