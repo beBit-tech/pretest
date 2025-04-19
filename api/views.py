@@ -3,21 +3,15 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework import status
 from .models import Order
+from .decorators import api_token_required
 import json
 
 # Create your views here.
-
-ACCEPTED_TOKEN = ('omni_pretest_token')
-
-
 @api_view(['POST'])
+@api_token_required
 def import_order(request):
     try:
         data = json.loads(request.body)
-        token = data.get('token')
-        
-        if token != ACCEPTED_TOKEN:
-            return JsonResponse({'error': 'Invalid access token'}, status=status.HTTP_401_UNAUTHORIZED)
         
         order_number = data.get('order_number')
         total_price = data.get('total_price')
