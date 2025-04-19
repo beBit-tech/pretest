@@ -4,33 +4,37 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from .models import Order
 from .decorators import api_token_required
+from .validators import OrderValidator
 import json
+from decimal import Decimal
 
 # Create your views here.
 @api_view(['POST'])
 @api_token_required
 def import_order(request):
+    data = json.loads(request.body)
+    
+    is_valid, error_response = OrderValidator.validate(data)
+    
+    if not is_valid:
+        return error_response
+    
+    order_number = data.get('order_number')
+    total_price = Decimal(data.get('total_price'))
+    
     try:
-        data = json.loads(request.body)
-        
-        order_number = data.get('order_number')
-        total_price = data.get('total_price')
-        
-        if not order_number or not total_price:
-            return JsonResponse({'error': 'Order number and total price cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
-        
         order = Order.objects.create(
             order_number=order_number,
             total_price=total_price
         )
-        
-        return JsonResponse({
-            'success': True,
-            'order_id': order.id,
-            'order_number': order.order_number,
-            'total_price': order.total_price,
-            'created_time': order.created_time
-        }, status=status.HTTP_201_CREATED)
-        
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return JsonResponse({
+        'success': True,
+        'order_id': order.id,
+        'order_number': order.order_number,
+        'total_price': Decimal(order.total_price),
+        'created_time': order.created_time
+    }, status=status.HTTP_201_CREATED)
+        

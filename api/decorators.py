@@ -1,23 +1,26 @@
 from functools import wraps
 from django.http import JsonResponse
 from rest_framework import status
-import json
 
 ACCEPTED_TOKEN = ('omni_pretest_token')
 
 def api_token_required(view_func):
     """
-    Decorator to check API token authentication
+    Decorator to check API token authentication from Authorization header
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
-            token = data.get('token')
+            auth_header = request.headers.get('Authorization', '')
             
-            if token != ACCEPTED_TOKEN:
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+            else:
+                token = auth_header
+            
+            if not token or token != ACCEPTED_TOKEN:
                 return JsonResponse(
-                    {'error': 'Invalid access token'}, 
+                    {'error': 'Invalid or missing access token'}, 
                     status=status.HTTP_401_UNAUTHORIZED
                 )
             
