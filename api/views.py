@@ -20,7 +20,7 @@ def import_order(request):
         return error_response
     
     order_number = data.get('order_number')
-    total_price = Decimal(data.get('total_price'))
+    total_price = Decimal(str(data.get('total_price')))
     
     try:
         order = Order.objects.create(
