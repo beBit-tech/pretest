@@ -21,13 +21,22 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(ProductSell)
 class ProductSellAdmin(admin.ModelAdmin):
-    list_display = ('id','get_seller_name',)
+    list_display = ('id','get_seller_name','get_product_name')
 
     def get_seller_name(self, obj):
         """獲取關聯 BuyUser 的 name 屬性。"""
         if obj.product.seller:
             return obj.product.seller.buyeruser.name
         return None
+
+    get_seller_name.short_description = "賣家名稱"
+    
+    def get_product_name(self,obj):
+        if obj.product:
+            return obj.product.name
+        return None
+    
+    get_product_name.short_description = "商品名"
 
 
 
