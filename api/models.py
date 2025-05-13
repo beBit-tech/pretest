@@ -5,12 +5,10 @@ from django.contrib.auth.models import User  # django 內建的 user
 
 
 class BuyUser(models.Model):
+
     # 使用者 註冊即買家  拓展原本的使用者
-
     name = models.CharField(max_length=20,verbose_name='買家名')
-    # user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='buyer')
-
-    age = models.IntegerField(verbose_name='年齡')  # 分析不同年齡層的喜好
+    age = models.IntegerField(verbose_name='年齡') 
     email = models.EmailField()
 
     class Meta:
@@ -25,16 +23,16 @@ class BuyUser(models.Model):
     pass
 
 
-# Create your models here.
+
 class Order(models.Model):
-    # Add your model here
+    
 
     order_num = models.IntegerField(default = 0, verbose_name = "訂單編號")
     total_price = models.IntegerField(default=0,verbose_name="總金額")
     created = models.DateTimeField(auto_now_add=True,verbose_name="建立時間")
 
 
-    # 下定的人的編號
+
     buyuser = models.ForeignKey(BuyUser,on_delete=models.CASCADE,related_name='order', null=True)   # 一個 user 會有多筆訂單
     
 
@@ -48,7 +46,6 @@ class Order(models.Model):
 class Pathway(models.Model):
 
     # 開放通路
-    
     name = models.CharField(max_length=15, verbose_name='通路名稱')
 
     class Meta:
@@ -59,9 +56,8 @@ class Pathway(models.Model):
         return self.name
 
 class Seller(models.Model):
-    # 賣家 對應 出售的產品
 
-    
+    # 賣家 對應 出售的產品
     buyeruser = models.OneToOneField(BuyUser,on_delete=models.CASCADE,related_name='seller', null=True, blank=True)
 
     pathway = models.ManyToManyField(Pathway)
@@ -97,7 +93,7 @@ class Product(models.Model):
         return self.name
 
 class ProductSell(models.Model):
-    # Foreignkey
+    
     
     # 單一一次銷售對應一個商品項目
     product = models.ForeignKey(Product,on_delete=models.CASCADE, related_name='productSell')
@@ -117,7 +113,7 @@ class Comment(models.Model):
 
     # 這條留言屬於
     order = models.OneToOneField(Order,on_delete=models.CASCADE,related_name='comments',verbose_name="訂單編號")  # 同個產品 會有多個評論
-    buyuser = models.ForeignKey(BuyUser,on_delete=models.CASCADE, related_name='comments', null=True, blank=True,verbose_name='留言的買家')   #  同個人會有多則評論
+    buyuser = models.OneToOneField(BuyUser,on_delete=models.CASCADE, related_name='comments', null=True, blank=True,verbose_name='留言的買家')   #  同個人會有多則評論
     
 
     class Meta:
@@ -125,5 +121,5 @@ class Comment(models.Model):
 
     def __str__(self):
         return "訂單"+str(self.order.order_num)+"的回覆"
-    # pass
+    
 
