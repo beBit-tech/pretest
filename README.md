@@ -1,5 +1,14 @@
 # 訂單管理系統 API 修改說明
 
+## Dokcerfile 修改Python Version
+```bash
+FROM python:3.11
+.
+.
+.
+
+```
+
 ## 主要功能改進
 
 ### 1. 資料模型強化 (models.py)
