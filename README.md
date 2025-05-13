@@ -11,8 +11,7 @@
                                  for item in self.order.orderitem_set.all())
 ```
 - 加入價格範圍驗證機制 (0 < price < 1,000,000,000)
-- 中文化管理介面顯示 
-- ![[Pasted image 20250513225231.png]]
+
 ### 2. 訂單處理邏輯(views.py)
 ```python
 @api_view(['POST'])
