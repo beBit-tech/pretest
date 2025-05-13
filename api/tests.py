@@ -83,9 +83,15 @@ class OrderImportTests(APITestCase):
         invalid_payload['products'] = [{'product_id': '550e8400-e29b-41d4-a716-446655441234', 'quantity': 1}]
         response = self.client.post(self.url, invalid_payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        print(response.data)
         self.assertIn('商品不存在', response.data['errors'][0])
 
+    def test_invalidUUID_product(self):
+        """測試無效的UUID"""
+        invalid_payload = self.valid_payload.copy()
+        invalid_payload['products'] = [{'product_id': 'invalid_UUID', 'quantity': 1}]
+        response = self.client.post(self.url, invalid_payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('ID格式錯誤', response.data['errors'][0])
     # --------------------------
     # 數量驗證測試
     # --------------------------
