@@ -1,12 +1,13 @@
 # 訂單管理系統 API 修改說明
-
-## Dokcerfile 修改Python Version為3.11
+![image](Pasted_image_20250513225231.png)
+## Dockerfile 修改Python Version為3.11
 - 預設Dockerfile會安裝Python3.13，導致psycopg2套件報錯
 - 因psycopg2 2.9.9版本僅支援Python 3.12
 - 2.9.10 才支援3.13
-```bash
+```dockerfile
 FROM python:3.11
-.
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 .
 .
 
