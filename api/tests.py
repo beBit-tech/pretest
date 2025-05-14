@@ -26,7 +26,15 @@ class OrderImportTests(APITestCase):
                 }
             ]
         }
-
+    # --------------------------
+    # 成功案例測試
+    # --------------------------
+    def test_successful_order(self):
+        """測試成功的訂單匯入"""
+        response = self.client.post(self.url, self.valid_payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn('order_id', response.data)
+    
     # --------------------------
     # 授權驗證測試
     # --------------------------
@@ -96,8 +104,11 @@ class OrderImportTests(APITestCase):
     # 數量驗證測試
     # --------------------------
     def test_zero_quantity(self):
-        """測試數量為0"""
+        """測試商品數量為0"""
         invalid_payload = self.valid_payload.copy()
         invalid_payload['products'][0]['quantity'] = 0
         response = self.client.post(self.url, invalid_payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+
