@@ -1,60 +1,83 @@
-# Omni Pretest
-## Setup Environment
-* Download [docker](https://www.docker.com/get-started) and Install
+# 訂單管理系統 API 修改說明
+![image](Pasted_image_20250513225231.png)
+## Dockerfile 修改Python Version為3.11
+- 預設Dockerfile會安裝Python3.13，導致psycopg2套件報錯
+- 因psycopg2 2.9.9版本僅支援Python 3.12
+- 2.9.10 才支援3.13
+```dockerfile
+FROM python:3.11
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+.
+.
 
-* [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) this **pretest** project to your own repository
+```
 
-* Clone **pretest** project from your own repository
-    ```
-    git clone https://github.com/[your own account]/pretest.git
-    ```
+## 主要功能改進
 
-* Checkout **pretest** directory
-    ```
-    cd pretest
-    ```
+### 1. 資料模型強化 (models.py)
+- 建立三表關聯結構：Order(訂單)、Product(商品)、OrderItem(訂單明細)
+- 自動化總價計算邏輯：
+```python
+  def save(self, *args, **kwargs):
+      self.order.total_price = sum(item.product.price * item.quantity 
+                                 for item in self.order.orderitem_set.all())
+```
+- 加入價格範圍驗證機制 (0 < price < 1,000,000,000)
 
-* Start docker container
-    ```
-    docker-compose up
-    ```
+### 2. 訂單處理邏輯(views.py)
+```python
+@api_view(['POST'])
+@token_required
+def import_order(request):
+    # 事務處理確保資料原子性
+    with transaction.atomic():
+        # 多層次驗證機制：
+        # 1. 輸入格式檢查
+        # 2. UUID 合法性驗證
+        # 3. 商品存在性確認
+        # 4. 數量有效性檢查
+        
+        # 錯誤處理流程：
+        if errors:
+            transaction.set_rollback(True)
+            return Response({'errors': errors}, 400)
+```
 
-* Enter activated **pretest-web-1** container
-    ```
-    docker exec -it pretest-web-1 bash
-    ```
-    Note:
+### 3. 測試案例強化 (tests.py)
+```python
+- 授權驗證測試(缺少token、無效token)
+- 商品數據結構驗證測試(空商品、非陣列儲存Product)
+- 商品項目驗證測試(不存在的商品、無ID、無效商品UID)
+- 數量驗證測試(商品數量為0)
+```
 
-    * This container codebase is connected to **pretest** project local codebase
-    * If you need to migrate migration files or test testcases, make sure do it in **pretest-web-1** container
----
-## Requirements
-* Construct **Order** Model in **api** app
+## API 測試指令
 
-    The below information is necessary in **Order** model:
-    * Order-number
-    * Total-price
-    * Created-time
+### POST 方法測試 (Port 8008)
+```bash
+curl -X POST http://localhost:8008/api/import-order/ \
+  -H "Content-Type: application/json" \
+  -d '{
+	"access_token":"omni_pretest_token",
+    "products": [
+      {"product_id": "095fbbf0-e34a-4ba1-8112-e68455b7eb18", "quantity": 1},
+      {"product_id": "01fe9fe6-4054-4776-90f0-76bed0053ad2", "quantity": 2},
+      {"product_id": "584b7428-eb51-4a0e-8c8b-6427fb3f7882", "quantity": 1}
+    ]
+  }'
+```
 
-* Construct **import_order** api ( POST method )
-    * Validate access token from request data
-    
-        ( accepted token is defined in **api/views.py** )
-    * Parse data and Save to corresponding fields
-* Construct api unittest
+### Django Admin(for test)
+```bash
+Account:root
+Password:12345678
+```
+## 商品清單範例
 
----
-## Advanced Requirements ( optional )
-* Replace the statement of checking api access token with a decorator
+| 商品UID                                | 商品名稱   | 價格    |
+| ------------------------------------ | ------ | ----- |
+| 095fbbf0-e34a-4ba1-8112-e68455b7eb18 | 智慧手環   | 899   |
+| 01fe9fe6-4054-4776-90f0-76bed0053ad2 | 無線藍牙耳機 | 1299  |
+| 584b7428-eb51-4a0e-8c8b-6427fb3f7882 | 筆記型電腦  | 30000 |
 
-* Extend Order model
-    * Construct **Product** model
-    * Build relationships between **Order** and **Product** model
-
-* Get creative and Extend anything you want  
----
-## Submit
-* After receiving this pretest, you have to finish it in 7 days
-* Create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) and name it with your name ( 王小明 - 面試 )
-
-* Feel free to let us know if there is any question: sophie.lee@bebit-tech.com
