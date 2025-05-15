@@ -1,12 +1,11 @@
 from django.contrib import admin
-from .models import Order,BuyUser, Pathway, Product,Comment,Seller,ProductSell
+from .models import Order,BuyUser, Product,Comment,Seller,ProductSell
 # Register your models here.
 
 
 
-# admin.site.register(BuyUser)
-# admin.site.register(Order)
 admin.site.register(BuyUser)
+admin.site.register(Seller)
 
 
 @admin.register(Order)
@@ -44,7 +43,6 @@ class ProductSellAdmin(admin.ModelAdmin):
 class CommentAdmin(admin.ModelAdmin):
     list_display = ('id','__str__','get_buyer_name','create_time')
 
-
     def get_buyer_name(self, obj):
         """獲取關聯 BuyUser 的 name 屬性。"""
         if obj.buyuser:
@@ -52,9 +50,6 @@ class CommentAdmin(admin.ModelAdmin):
         return None
 
 
-
-admin.site.register(Seller)
-admin.site.register(Pathway)
 
 
 
