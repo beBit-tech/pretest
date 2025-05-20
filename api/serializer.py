@@ -1,16 +1,22 @@
 from rest_framework import serializers
-from .models import Order
+from .models import Order, Product
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = '__all__' # ['id', 'order_number', 'total_price', 'created_at']
+        fields = '__all__' # ['id', 'order_number', 'total_price', 'product_id', 'created_at']
 
     def format_check(value):
         # maybe order_number format check
         pass
 
     order_number = serializers.CharField(required=False, validators=[format_check])
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
 
 
 class ImportOrderSerializer(serializers.Serializer):
